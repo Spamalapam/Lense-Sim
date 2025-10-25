@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Optical Visualizer v23.0 (Definitive)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Optical Visualizer v24.1 (Mobile Fix)</title>
     <style>
         :root {
             --bg-color: #1e1e24; --surface-color: #2a2a30; --text-color: #e0e0e0;
@@ -18,9 +18,10 @@
         }
         html { background-color: var(--bg-color); }
         body {
-            font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
             display: grid; place-items: center; min-height: 100vh;
-            margin: 0; padding: 2em; color: var(--text-color);
+            margin: 0; padding: 1em; color: var(--text-color);
+            -webkit-font-smoothing: antialiased;
         }
         h1 { font-weight: 300; letter-spacing: 1px; color: var(--primary-color); text-align: center; }
         .main-container {
@@ -28,11 +29,12 @@
             gap: 2.5em; flex-wrap: wrap; width: 100%; max-width: 1000px;
         }
         .controls {
-            background-color: var(--surface-color); padding: 2em; border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3); width: 320px; border: 1px solid var(--border-color);
-            flex-shrink: 0;
+            background-color: var(--surface-color); padding: 1.5em; border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3); width: 100%; max-width: 320px; border: 1px solid var(--border-color);
+            flex-shrink: 0; box-sizing: border-box;
         }
         .input-group { margin-bottom: 1.75em; }
+        .input-group:last-child { margin-bottom: 0; }
         .input-group label {
             display: block; margin-bottom: 0.6em; font-weight: 500; font-size: 0.9em;
             color: #aaa; text-transform: uppercase; letter-spacing: 0.5px;
@@ -41,26 +43,334 @@
         .slider-group input[type="range"] {
             flex-grow: 1; -webkit-appearance: none; appearance: none;
             height: 8px; background: #444; border-radius: 5px; outline: none;
+            padding: 0; margin: 0;
         }
         .slider-group input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none; appearance: none; width: 20px; height: 20px;
+            -webkit-appearance: none; appearance: none; width: 22px; height: 22px;
+            background: var(--primary-color); cursor: pointer; border-radius: 50%;
+        }
+         .slider-group input[type="range"]::-moz-range-thumb {
+            width: 22px; height: 22px;
             background: var(--primary-color); cursor: pointer; border-radius: 50%;
         }
         .slider-group span { font-size: 1.1em; font-weight: bold; color: #fff; min-width: 60px; text-align: right; }
         .precision-btn {
             background: #444; border: 1px solid var(--border-color); color: var(--text-color);
-            width: 28px; height: 28px; border-radius: 50%; font-size: 1.2em; line-height: 26px;
-            text-align: center; cursor: pointer; user-select: none;
+            width: 30px; height: 30px; border-radius: 50%; font-size: 1.4em; line-height: 28px;
+            text-align: center; cursor: pointer; user-select: none; flex-shrink: 0;
         }
         #materialName { font-size: 1.0em; font-weight: normal; min-width: 150px; text-align: right; }
-        .visualization-area { display: flex; flex-direction: column; align-items: center; gap: 1.5em; }
+        .visualization-area { display: flex; flex-direction: column; align-items: center; gap: 1.5em; width: 100%; }
         .canvas-wrapper {
-            position: relative; width: 600px; height: 600px; background-color: var(--surface-color);
+            position: relative; 
+            width: 100%; 
+            max-width: 600px;
+            aspect-ratio: 1 / 1;
+            background-color: var(--surface-color);
             border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.3); border: 1px solid var(--border-color);
+        }
+        #lensCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
         }
         .metrics-box {
             background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 12px;
-            padding: 1.5em; width: 600px; box-sizing: border-box; display: grid; grid-template-columns: repeat(2, 1fr); gap: 1em;
+            padding: 1.5em; width: 100%; max-width: 600px; box-sizing: border-box; display: grid; grid-template-columns: repeat(2, 1fr); gap: 1em;
+        }
+        .metric { text-align: center; }
+        .metric-label { font-size: 0.8em; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5em; }
+        .metric-value { font-size: 1.8em; font-weight: bold; color: var(--metric-value-color); }
+    </style>
+</head>
+<body>
+    <div>
+        <h1>Lens Visualizer</h1>
+        <div class="main-container">
+            <div class="controls">
+                <div class="input-group">
+                    <label>Spherical Power (SPH)</label>
+                    <div class="slider-group">
+                        <div class="precision-btn" id="sph-minus">-</div>
+                        <input type="range" id="sphere" min="-15" max="10" value="-6.00" step="0.25">
+                        <div class="precision-btn" id="sph-plus">+</div>
+                        <span id="sphereValue">-6.00</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Cylindrical Power (CYL)</label>
+                    <div class="slider-group">
+                        <div class="precision-btn" id="cyl-minus">-</div>
+                        <input type="range" id="cylinder" min="-6" max="6" value="0.00" step="0.25">
+                        <div class="precision-btn" id="cyl-plus">+</div>
+                        <span id="cylinderValue">0.00</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Axis</label>
+                    <div class="slider-group">
+                        <input type="range" id="axis" min="0" max="180" value="180" step="1">
+                        <span id="axisValue">180</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Lens Material</label>
+                    <div class="slider-group">
+                        <input type="range" id="materialSlider" min="0" max="3" value="2" step="1">
+                        <span id="materialName">1.67 HI</span>
+                    </div>
+                </div>
+            </div>
+            <div class="visualization-area">
+                <div class="canvas-wrapper"><canvas id="lensCanvas"></canvas></div>
+                <div class="metrics-box" id="metricsBox">
+                    <div class="metric"><div class="metric-label">Comfort Zone Diameter</div><div class="metric-value" id="clarityDiameterValue">-- mm</div></div>
+                    <div class="metric"><div class="metric-label">Peripheral Distortion</div><div class="metric-value" id="distortionValue">-- %</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. GET UI ELEMENTS AND SETUP ---
+        const ui = {};
+        ['sphere', 'sphereValue', 'cylinder', 'cylinderValue', 'axis', 'axisValue', 'materialSlider', 'materialName', 'clarityDiameterValue', 'distortionValue', 'sph-minus', 'sph-plus', 'cyl-minus', 'cyl-plus'].forEach(id => ui[id] = document.getElementById(id));
+        const canvas = document.getElementById('lensCanvas');
+        const ctx = canvas.getContext('2d');
+        const controls = document.querySelectorAll('.controls input[type="range"]');
+
+        let pxPerMm = 4; // A safe fallback value
+
+        const materials = [
+            { index: 1.59, name: '1.59 Poly', factor: 1.0 }, { index: 1.60, name: '1.60 HI', factor: 1.8 },
+            { index: 1.67, name: '1.67 HI', factor: 2.2 }, { index: 1.74, name: '1.74 HI', factor: 4.5 }
+        ];
+
+        // Offscreen canvas for pre-rendering the background
+        const offscreenCanvas = document.createElement('canvas');
+        const offscreenCtx = offscreenCanvas.getContext('2d');
+        
+        // --- 2. DYNAMIC SIZING FUNCTIONS ---
+
+        /**
+         * Calculates the actual number of screen pixels per millimeter.
+         */
+        function calculatePxPerMm() {
+            const div = document.createElement('div');
+            div.style.cssText = 'position:absolute; top:-9999px; left:-9999px; width:1mm; height:1mm;';
+            document.body.appendChild(div);
+            const mmInPx = div.getBoundingClientRect().width;
+            document.body.removeChild(div);
+            return mmInPx > 0 ? mmInPx : 4; // Fallback if detection fails
+        }
+        
+        /**
+         * Scales the canvas drawing surface for High-DPI (Retina) displays.
+         */
+        function setupCanvas() {
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            
+            // SAFEGUARD: If the canvas has no size yet, stop to prevent errors.
+            if (rect.width === 0 || rect.height === 0) {
+                console.warn("Canvas has no dimensions yet. Aborting draw.");
+                return false; // Indicate failure
+            }
+            
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+
+            ctx.scale(dpr, dpr);
+            
+            // Set the logical size for drawing operations
+            canvas.logicalWidth = rect.width;
+            canvas.logicalHeight = rect.height;
+            return true; // Indicate success
+        }
+        
+        function setupOffscreenCanvas() {
+            offscreenCanvas.width = canvas.width;
+            offscreenCanvas.height = canvas.height;
+        }
+
+        // --- 3. CORE LOGIC ---
+
+        function updateUI() {
+            ui.sphereValue.textContent = parseFloat(ui.sphere.value).toFixed(2);
+            ui.cylinderValue.textContent = parseFloat(ui.cylinder.value).toFixed(2);
+            ui.axisValue.textContent = ui.axis.value;
+            ui.materialName.textContent = materials[parseInt(ui.materialSlider.value)].name;
+            drawVisualization();
+        }
+        
+        controls.forEach(el => el.addEventListener('input', updateUI));
+        
+        const adjustSlider = (slider, step) => {
+            let val = parseFloat(slider.value) + step;
+            slider.value = Math.max(parseFloat(slider.min), Math.min(parseFloat(slider.max), val));
+            updateUI();
+        };
+        ui['sph-minus'].addEventListener('click', () => adjustSlider(ui.sphere, -0.25));
+        ui['sph-plus'].addEventListener('click', () => adjustSlider(ui.sphere, 0.25));
+        ui['cyl-minus'].addEventListener('click', () => adjustSlider(ui.cylinder, -0.25));
+        ui['cyl-plus'].addEventListener('click', () => adjustSlider(ui.cylinder, 0.25));
+
+        function calculateOpticalMetrics(p) {
+            const baseP = Math.abs(p.sph), totalP = Math.abs(p.sph + p.cyl);
+            const distortionResistance = p.material.factor;
+            const maxClearMm = 45;
+            const powerPenaltySphere = Math.pow(baseP, 1.2);
+            const powerPenaltyTotal = Math.pow(totalP, 1.2);
+            const clarityDiameterSphere = Math.max(8, maxClearMm - powerPenaltySphere * (3.0 / distortionResistance));
+            const clarityDiameterTotal = Math.max(8, maxClearMm - powerPenaltyTotal * (3.0 / distortionResistance));
+            const rawDistortion = Math.pow(baseP, 1.5) + Math.pow(totalP, 1.6);
+            const distortionStrength = Math.min(100, rawDistortion / distortionResistance);
+            
+            return {
+                clarityDiameterSphere, clarityDiameterTotal, distortionStrength,
+                blurIntensity: distortionStrength / 8, 
+                warpFactor: -p.sph * 0.02 * (1 + distortionStrength * 0.01),
+                twistFactor: -p.cyl * 0.1 * (1 + distortionStrength * 0.01)
+            };
+        }
+
+        // --- 4. DRAWING FUNCTIONS ---
+
+        function drawVisualization() {
+            const material = materials[parseInt(ui.materialSlider.value)];
+            const p = { sph: parseFloat(ui.sphere.value) || 0, cyl: parseFloat(ui.cylinder.value) || 0, axis: parseInt(ui.axis.value) || 0, material: material };
+            
+            const w = canvas.logicalWidth;
+            const h = canvas.logicalHeight;
+            
+            const metrics = calculateOpticalMetrics(p);
+
+            ui.clarityDiameterValue.textContent = `${Math.min(metrics.clarityDiameterSphere, metrics.clarityDiameterTotal).toFixed(1)} mm`;
+            ui.distortionValue.textContent = `${metrics.distortionStrength.toFixed(0)} %`;
+            
+            const optimalRadiusX = (metrics.clarityDiameterSphere / 2) * pxPerMm;
+            const optimalRadiusY = (metrics.clarityDiameterTotal / 2) * pxPerMm;
+            
+            createBackground(offscreenCtx, w, h, optimalRadiusX, optimalRadiusY, p.axis);
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.filter = `blur(${metrics.blurIntensity * (window.devicePixelRatio || 1)}px)`;
+            
+            drawRayMappedView(ctx, offscreenCanvas, p, metrics);
+            ctx.restore();
+        }
+        
+        function createBackground(context, w, h, r_opt_x, r_opt_y, axis) {
+            const dpr = window.devicePixelRatio || 1;
+            context.save();
+            context.scale(dpr, dpr);
+            drawClarityMap(context, w, h, r_opt_x, r_opt_y, r_opt_x*1.7, r_opt_y*1.7, axis);
+            drawGrid(context, w, h);
+            context.restore();
+        }
+
+        function drawClarityMap(context, w, h, r_opt_x, r_opt_y, r_func_x, r_func_y, axis) {
+            const cx = w / 2, cy = h / 2;
+            context.save();
+            const axisRad = axis * Math.PI / 180;
+            const maxRadius = Math.sqrt(w*w + h*h) / 2;
+
+            const drawEllipse = (radiusX, radiusY, color) => {
+                context.beginPath();
+                context.fillStyle = color;
+                context.ellipse(cx, cy, radiusX, radiusY, axisRad, 0, 2 * Math.PI);
+                context.fill();
+            };
+
+            const r_red_x = maxRadius;
+            const r_red_y = maxRadius;
+            const r_orange_x = r_func_x + (maxRadius - r_func_x) * 0.6;
+            const r_orange_y = r_func_y + (maxRadius - r_func_y) * 0.6;
+            
+            drawEllipse(r_red_x, r_red_y, getComputedStyle(document.documentElement).getPropertyValue('--red-zone'));
+            drawEllipse(r_orange_x, r_orange_y, getComputedStyle(document.documentElement).getPropertyValue('--orange-zone'));
+            drawEllipse(r_func_x, r_func_y, getComputedStyle(document.documentElement).getPropertyValue('--yellow-zone'));
+            drawEllipse(r_opt_x, r_opt_y, getComputedStyle(document.documentElement).getPropertyValue('--green-zone'));
+            drawEllipse(r_opt_x * 0.5, r_opt_y * 0.5, getComputedStyle(document.documentElement).getPropertyValue('--blue-zone'));
+            
+            context.restore();
+        }
+        
+        function drawGrid(context, w, h) {
+            context.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+            context.lineWidth = 1.5;
+            const step = 40;
+            for(let i=0; i <= w; i+=step) { context.beginPath(); context.moveTo(i,0); context.lineTo(i,h); context.stroke(); }
+            for(let i=0; i <= h; i+=step) { context.beginPath(); context.moveTo(0,i); context.lineTo(w,i); context.stroke(); }
+        }
+
+        function drawRayMappedView(ctx, sourceCanvas, p, metrics) {
+            const w = sourceCanvas.width;
+            const h = sourceCanvas.height;
+            const cx = w / 2;
+            const cy = h / 2;
+            const axisRad = p.axis * Math.PI / 180;
+            
+            const imageData = sourceCanvas.getContext('2d').getImageData(0, 0, w, h);
+            const destData = ctx.createImageData(w, h);
+            
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    const dx = x - cx;
+                    const dy = y - cy;
+                    const r = Math.sqrt(dx * dx + dy * dy);
+                    if (r === 0) continue;
+                    
+                    const rNorm = r / (w / 2);
+                    let theta = Math.atan2(dy, dx);
+                    
+                    const radialShift = 1 + metrics.warpFactor * Math.pow(rNorm, 1.5);
+                    const twistAngle = metrics.twistFactor * Math.pow(rNorm, 2) * Math.sin(2 * (theta - axisRad));
+                    
+                    theta -= twistAngle;
+                    
+                    const srcR = r / radialShift;
+                    const sx = cx + srcR * Math.cos(theta);
+                    const sy = cy + srcR * Math.sin(theta);
+                    
+                    if (sx >= 0 && sx < w && sy >= 0 && sy < h) {
+                        const srcIndex = (Math.floor(sy) * w + Math.floor(sx)) * 4;
+                        const destIndex = (y * w + x) * 4;
+                        destData.data[destIndex]     = imageData.data[srcIndex];
+                        destData.data[destIndex + 1] = imageData.data[srcIndex + 1];
+                        destData.data[destIndex + 2] = imageData.data[srcIndex + 2];
+                        destData.data[destIndex + 3] = 255;
+                    }
+                }
+            }
+            ctx.putImageData(destData, 0, 0);
+        }
+
+        // --- 5. INITIALIZATION ---
+        
+        function initialize() {
+            pxPerMm = calculatePxPerMm();
+            if (!setupCanvas()) return; // Stop if canvas isn't ready
+            setupOffscreenCanvas();
+            updateUI();
+        }
+
+        // Use setTimeout to give the browser a moment to finalize layout
+        window.addEventListener('load', () => {
+            setTimeout(initialize, 50);
+        });
+
+        // Debounce resize event to avoid excessive redrawing
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(initialize, 100);
+        });
+
+    </script>
+</body>
+</html>
         }
         .metric { text-align: center; }
         .metric-label { font-size: 0.8em; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5em; }
