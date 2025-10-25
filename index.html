@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Optical Visualizer v24.1 (Mobile Fix)</title>
+    <title>Optical Visualizer v24.2 (Accuracy Fix)</title>
     <style>
         :root {
             --bg-color: #1e1e24; --surface-color: #2a2a30; --text-color: #e0e0e0;
-            --primary-color: #00bcd4; --border-color: #444; 
+            --primary-color: #00bcd4; --border-color: #444;
             --metric-value-color: #ffffff;
             /* Heat Map Colors */
             --blue-zone: rgba(0, 191, 255, 0.35);
@@ -62,8 +62,8 @@
         #materialName { font-size: 1.0em; font-weight: normal; min-width: 150px; text-align: right; }
         .visualization-area { display: flex; flex-direction: column; align-items: center; gap: 1.5em; width: 100%; }
         .canvas-wrapper {
-            position: relative; 
-            width: 100%; 
+            position: relative;
+            width: 100%;
             max-width: 600px;
             aspect-ratio: 1 / 1;
             background-color: var(--surface-color);
@@ -81,6 +81,12 @@
         .metric { text-align: center; }
         .metric-label { font-size: 0.8em; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5em; }
         .metric-value { font-size: 1.8em; font-weight: bold; color: var(--metric-value-color); }
+        #accuracy-note {
+            font-size: 0.8em;
+            color: #888;
+            text-align: center;
+            margin-top: -1em; /* Pulls it closer to the box above */
+        }
     </style>
 </head>
 <body>
@@ -127,6 +133,7 @@
                     <div class="metric"><div class="metric-label">Comfort Zone Diameter</div><div class="metric-value" id="clarityDiameterValue">-- mm</div></div>
                     <div class="metric"><div class="metric-label">Peripheral Distortion</div><div class="metric-value" id="distortionValue">-- %</div></div>
                 </div>
+                <p id="accuracy-note">For true-to-life size, please set browser zoom to 100%.</p>
             </div>
         </div>
     </div>
@@ -149,7 +156,7 @@
         // Offscreen canvas for pre-rendering the background
         const offscreenCanvas = document.createElement('canvas');
         const offscreenCtx = offscreenCanvas.getContext('2d');
-        
+
         // --- 2. DYNAMIC SIZING FUNCTIONS ---
 
         /**
@@ -163,31 +170,31 @@
             document.body.removeChild(div);
             return mmInPx > 0 ? mmInPx : 4; // Fallback if detection fails
         }
-        
+
         /**
          * Scales the canvas drawing surface for High-DPI (Retina) displays.
          */
         function setupCanvas() {
             const dpr = window.devicePixelRatio || 1;
             const rect = canvas.getBoundingClientRect();
-            
+
             // SAFEGUARD: If the canvas has no size yet, stop to prevent errors.
             if (rect.width === 0 || rect.height === 0) {
                 console.warn("Canvas has no dimensions yet. Aborting draw.");
                 return false; // Indicate failure
             }
-            
+
             canvas.width = rect.width * dpr;
             canvas.height = rect.height * dpr;
 
             ctx.scale(dpr, dpr);
-            
+
             // Set the logical size for drawing operations
             canvas.logicalWidth = rect.width;
             canvas.logicalHeight = rect.height;
             return true; // Indicate success
         }
-        
+
         function setupOffscreenCanvas() {
             offscreenCanvas.width = canvas.width;
             offscreenCanvas.height = canvas.height;
@@ -202,9 +209,9 @@
             ui.materialName.textContent = materials[parseInt(ui.materialSlider.value)].name;
             drawVisualization();
         }
-        
+
         controls.forEach(el => el.addEventListener('input', updateUI));
-        
+
         const adjustSlider = (slider, step) => {
             let val = parseFloat(slider.value) + step;
             slider.value = Math.max(parseFloat(slider.min), Math.min(parseFloat(slider.max), val));
@@ -225,10 +232,10 @@
             const clarityDiameterTotal = Math.max(8, maxClearMm - powerPenaltyTotal * (3.0 / distortionResistance));
             const rawDistortion = Math.pow(baseP, 1.5) + Math.pow(totalP, 1.6);
             const distortionStrength = Math.min(100, rawDistortion / distortionResistance);
-            
+
             return {
                 clarityDiameterSphere, clarityDiameterTotal, distortionStrength,
-                blurIntensity: distortionStrength / 8, 
+                blurIntensity: distortionStrength / 8,
                 warpFactor: -p.sph * 0.02 * (1 + distortionStrength * 0.01),
                 twistFactor: -p.cyl * 0.1 * (1 + distortionStrength * 0.01)
             };
@@ -239,28 +246,28 @@
         function drawVisualization() {
             const material = materials[parseInt(ui.materialSlider.value)];
             const p = { sph: parseFloat(ui.sphere.value) || 0, cyl: parseFloat(ui.cylinder.value) || 0, axis: parseInt(ui.axis.value) || 0, material: material };
-            
+
             const w = canvas.logicalWidth;
             const h = canvas.logicalHeight;
-            
+
             const metrics = calculateOpticalMetrics(p);
 
             ui.clarityDiameterValue.textContent = `${Math.min(metrics.clarityDiameterSphere, metrics.clarityDiameterTotal).toFixed(1)} mm`;
             ui.distortionValue.textContent = `${metrics.distortionStrength.toFixed(0)} %`;
-            
+
             const optimalRadiusX = (metrics.clarityDiameterSphere / 2) * pxPerMm;
             const optimalRadiusY = (metrics.clarityDiameterTotal / 2) * pxPerMm;
-            
+
             createBackground(offscreenCtx, w, h, optimalRadiusX, optimalRadiusY, p.axis);
-            
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.save();
             ctx.filter = `blur(${metrics.blurIntensity * (window.devicePixelRatio || 1)}px)`;
-            
+
             drawRayMappedView(ctx, offscreenCanvas, p, metrics);
             ctx.restore();
         }
-        
+
         function createBackground(context, w, h, r_opt_x, r_opt_y, axis) {
             const dpr = window.devicePixelRatio || 1;
             context.save();
@@ -287,20 +294,20 @@
             const r_red_y = maxRadius;
             const r_orange_x = r_func_x + (maxRadius - r_func_x) * 0.6;
             const r_orange_y = r_func_y + (maxRadius - r_func_y) * 0.6;
-            
+
             drawEllipse(r_red_x, r_red_y, getComputedStyle(document.documentElement).getPropertyValue('--red-zone'));
             drawEllipse(r_orange_x, r_orange_y, getComputedStyle(document.documentElement).getPropertyValue('--orange-zone'));
             drawEllipse(r_func_x, r_func_y, getComputedStyle(document.documentElement).getPropertyValue('--yellow-zone'));
             drawEllipse(r_opt_x, r_opt_y, getComputedStyle(document.documentElement).getPropertyValue('--green-zone'));
             drawEllipse(r_opt_x * 0.5, r_opt_y * 0.5, getComputedStyle(document.documentElement).getPropertyValue('--blue-zone'));
-            
+
             context.restore();
         }
-        
+
         function drawGrid(context, w, h) {
             context.strokeStyle = 'rgba(0, 0, 0, 0.4)';
             context.lineWidth = 1.5;
-            const step = 40;
+            const step = 40; // Static grid for visual reference
             for(let i=0; i <= w; i+=step) { context.beginPath(); context.moveTo(i,0); context.lineTo(i,h); context.stroke(); }
             for(let i=0; i <= h; i+=step) { context.beginPath(); context.moveTo(0,i); context.lineTo(w,i); context.stroke(); }
         }
@@ -311,29 +318,29 @@
             const cx = w / 2;
             const cy = h / 2;
             const axisRad = p.axis * Math.PI / 180;
-            
+
             const imageData = sourceCanvas.getContext('2d').getImageData(0, 0, w, h);
             const destData = ctx.createImageData(w, h);
-            
+
             for (let y = 0; y < h; y++) {
                 for (let x = 0; x < w; x++) {
                     const dx = x - cx;
                     const dy = y - cy;
                     const r = Math.sqrt(dx * dx + dy * dy);
                     if (r === 0) continue;
-                    
+
                     const rNorm = r / (w / 2);
                     let theta = Math.atan2(dy, dx);
-                    
+
                     const radialShift = 1 + metrics.warpFactor * Math.pow(rNorm, 1.5);
                     const twistAngle = metrics.twistFactor * Math.pow(rNorm, 2) * Math.sin(2 * (theta - axisRad));
-                    
+
                     theta -= twistAngle;
-                    
+
                     const srcR = r / radialShift;
                     const sx = cx + srcR * Math.cos(theta);
                     const sy = cy + srcR * Math.sin(theta);
-                    
+
                     if (sx >= 0 && sx < w && sy >= 0 && sy < h) {
                         const srcIndex = (Math.floor(sy) * w + Math.floor(sx)) * 4;
                         const destIndex = (y * w + x) * 4;
@@ -348,7 +355,7 @@
         }
 
         // --- 5. INITIALIZATION ---
-        
+
         function initialize() {
             pxPerMm = calculatePxPerMm();
             if (!setupCanvas()) return; // Stop if canvas isn't ready
@@ -368,240 +375,6 @@
             resizeTimeout = setTimeout(initialize, 100);
         });
 
-    </script>
-</body>
-</html>
-        }
-        .metric { text-align: center; }
-        .metric-label { font-size: 0.8em; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5em; }
-        .metric-value { font-size: 1.8em; font-weight: bold; color: var(--metric-value-color); }
-    </style>
-</head>
-<body>
-    <div>
-        <h1>Lens Visualizer v23.0</h1>
-        <div class="main-container">
-            <div class="controls">
-                <div class="input-group">
-                    <label>Spherical Power (SPH)</label>
-                    <div class="slider-group">
-                        <div class="precision-btn" id="sph-minus">-</div>
-                        <input type="range" id="sphere" min="-15" max="10" value="-6.00" step="0.25">
-                        <div class="precision-btn" id="sph-plus">+</div>
-                        <span id="sphereValue">-6.00</span>
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label>Cylindrical Power (CYL)</label>
-                    <div class="slider-group">
-                        <div class="precision-btn" id="cyl-minus">-</div>
-                        <input type="range" id="cylinder" min="-6" max="6" value="0.00" step="0.25">
-                        <div class="precision-btn" id="cyl-plus">+</div>
-                        <span id="cylinderValue">0.00</span>
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label>Axis</label>
-                    <div class="slider-group">
-                        <input type="range" id="axis" min="0" max="180" value="180" step="1">
-                        <span id="axisValue">180</span>
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label>Lens Material</label>
-                    <div class="slider-group">
-                        <input type="range" id="materialSlider" min="0" max="3" value="2" step="1">
-                        <span id="materialName">1.67 HI</span>
-                    </div>
-                </div>
-            </div>
-            <div class="visualization-area">
-                <div class="canvas-wrapper"><canvas id="lensCanvas" width="600" height="600"></canvas></div>
-                <div class="metrics-box" id="metricsBox">
-                    <div class="metric"><div class="metric-label">Comfort Zone Diameter</div><div class="metric-value" id="clarityDiameterValue">-- mm</div></div>
-                    <div class="metric"><div class="metric-label">Peripheral Distortion</div><div class="metric-value" id="distortionValue">-- %</div></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const ui = {};
-        ['sphere', 'sphereValue', 'cylinder', 'cylinderValue', 'axis', 'axisValue', 'materialSlider', 'materialName', 'clarityDiameterValue', 'distortionValue', 'sph-minus', 'sph-plus', 'cyl-minus', 'cyl-plus'].forEach(id => ui[id] = document.getElementById(id));
-        const canvas = document.getElementById('lensCanvas'), ctx = canvas.getContext('2d');
-        const offscreenCanvas = document.createElement('canvas');
-        offscreenCanvas.width = canvas.width;
-        offscreenCanvas.height = canvas.height;
-        const offscreenCtx = offscreenCanvas.getContext('2d');
-        
-        const controls = document.querySelectorAll('.controls input[type="range"]');
-        
-        const materials = [
-            { index: 1.59, name: '1.59 Poly', factor: 1.0 }, { index: 1.60, name: '1.60 HI', factor: 1.8 },
-            { index: 1.67, name: '1.67 HI', factor: 2.2 }, { index: 1.74, name: '1.74 HI', factor: 4.5 }
-        ];
-
-        function updateUI() {
-            ui.sphereValue.textContent = parseFloat(ui.sphere.value).toFixed(2);
-            ui.cylinderValue.textContent = parseFloat(ui.cylinder.value).toFixed(2);
-            ui.axisValue.textContent = ui.axis.value;
-            ui.materialName.textContent = materials[parseInt(ui.materialSlider.value)].name;
-            drawVisualization();
-        }
-        
-        controls.forEach(el => el.addEventListener('input', updateUI));
-        const adjustSlider = (slider, step) => {
-            let val = parseFloat(slider.value) + step;
-            slider.value = Math.max(parseFloat(slider.min), Math.min(parseFloat(slider.max), val));
-            updateUI();
-        };
-        ui['sph-minus'].addEventListener('click', () => adjustSlider(ui.sphere, -0.25));
-        ui['sph-plus'].addEventListener('click', () => adjustSlider(ui.sphere, 0.25));
-        ui['cyl-minus'].addEventListener('click', () => adjustSlider(ui.cylinder, -0.25));
-        ui['cyl-plus'].addEventListener('click', () => adjustSlider(ui.cylinder, 0.25));
-
-        function calculateOpticalMetrics(p) {
-            const baseP = Math.abs(p.sph), totalP = Math.abs(p.sph + p.cyl);
-            const distortionResistance = p.material.factor;
-            const maxClearMm = 45;
-            const powerPenaltySphere = Math.pow(baseP, 1.2);
-            const powerPenaltyTotal = Math.pow(totalP, 1.2);
-            const clarityDiameterSphere = Math.max(8, maxClearMm - powerPenaltySphere * (3.0 / distortionResistance));
-            const clarityDiameterTotal = Math.max(8, maxClearMm - powerPenaltyTotal * (3.0 / distortionResistance));
-            const rawDistortion = Math.pow(baseP, 1.5) + Math.pow(totalP, 1.6);
-            const distortionStrength = Math.min(100, rawDistortion / distortionResistance);
-            
-            return {
-                clarityDiameterSphere, clarityDiameterTotal, distortionStrength,
-                blurIntensity: distortionStrength / 8, 
-                magnification: 1 - (p.sph * 0.015), 
-                anamorphicFactor: 1 - ((p.sph + p.cyl) * 0.015),
-                warpFactor: -p.sph * 0.02 * (1 + distortionStrength * 0.01),
-                twistFactor: -p.cyl * 0.1 * (1 + distortionStrength * 0.01)
-            };
-        }
-
-        function drawVisualization() {
-            const material = materials[parseInt(ui.materialSlider.value)];
-            const p = { sph: parseFloat(ui.sphere.value) || 0, cyl: parseFloat(ui.cylinder.value) || 0, axis: parseInt(ui.axis.value) || 0, material: material };
-            const w = canvas.width, h = canvas.height;
-            const pxPerMm = 8;
-            const metrics = calculateOpticalMetrics(p);
-
-            ui.clarityDiameterValue.textContent = `${Math.min(metrics.clarityDiameterSphere, metrics.clarityDiameterTotal).toFixed(1)} mm`;
-            ui.distortionValue.textContent = `${metrics.distortionStrength.toFixed(0)} %`;
-            
-            const optimalRadiusX = (metrics.clarityDiameterSphere / 2) * pxPerMm;
-            const optimalRadiusY = (metrics.clarityDiameterTotal / 2) * pxPerMm;
-            
-            // --- NEW TWO-STAGE RENDERING ---
-            // 1. Create the perfect background on the off-screen canvas
-            createBackground(offscreenCtx, w, h, optimalRadiusX, optimalRadiusY, p.axis);
-            
-            // 2. Use the ray-mapping engine to draw the distorted view on the main canvas
-            ctx.clearRect(0, 0, w, h);
-            ctx.save();
-            ctx.filter = `blur(${metrics.blurIntensity}px)`;
-            drawRayMappedView(ctx, offscreenCanvas, p, metrics);
-            ctx.restore();
-        }
-        
-        // This function creates the perfect background with grid and heat map
-        function createBackground(context, w, h, r_opt_x, r_opt_y, axis) {
-            const cx = w/2, cy = h/2;
-            // Draw heat map first
-            drawClarityMap(context, w, h, cx, cy, r_opt_x, r_opt_y, r_opt_x*1.7, r_opt_y*1.7, axis);
-            // Draw grid on top
-            drawGrid(context, w, h);
-        }
-
-        function drawClarityMap(context, w, h, cx, cy, r_opt_x, r_opt_y, r_func_x, r_func_y, axis) {
-            context.save();
-            const axisRad = axis * Math.PI / 180;
-            const maxRadius = Math.sqrt(w*w + h*h) / 2; // Diagonal half-distance
-
-            const drawEllipse = (radiusX, radiusY, color) => {
-                context.beginPath();
-                context.fillStyle = color;
-                context.ellipse(cx, cy, radiusX, radiusY, axisRad, 0, 2 * Math.PI);
-                context.fill();
-            };
-
-            const r_red_x = maxRadius;
-            const r_red_y = maxRadius;
-            const r_orange_x = r_func_x + (maxRadius - r_func_x) * 0.6;
-            const r_orange_y = r_func_y + (maxRadius - r_func_y) * 0.6;
-            
-            // Draw from largest to smallest
-            drawEllipse(r_red_x, r_red_y, getComputedStyle(document.documentElement).getPropertyValue('--red-zone'));
-            drawEllipse(r_orange_x, r_orange_y, getComputedStyle(document.documentElement).getPropertyValue('--orange-zone'));
-            drawEllipse(r_func_x, r_func_y, getComputedStyle(document.documentElement).getPropertyValue('--yellow-zone'));
-            drawEllipse(r_opt_x, r_opt_y, getComputedStyle(document.documentElement).getPropertyValue('--green-zone'));
-            drawEllipse(r_opt_x * 0.5, r_opt_y * 0.5, getComputedStyle(document.documentElement).getPropertyValue('--blue-zone'));
-            
-            context.restore();
-        }
-        
-        function drawGrid(context, w, h) {
-            context.strokeStyle = 'rgba(0, 0, 0, 0.4)';
-            context.lineWidth = 1.5;
-            const step = 40;
-            for(let i=0; i <= w; i+=step) { context.beginPath(); context.moveTo(i,0); context.lineTo(i,h); context.stroke(); }
-            for(let i=0; i <= h; i+=step) { context.beginPath(); context.moveTo(0,i); context.lineTo(w,i); context.stroke(); }
-        }
-
-        // The stable ray-mapping engine from v16
-        function drawRayMappedView(ctx, sourceCanvas, p, metrics) {
-            const w = ctx.canvas.width;
-            const h = ctx.canvas.height;
-            const cx = w / 2;
-            const cy = h / 2;
-            const axisRad = p.axis * Math.PI / 180;
-            
-            const imageData = sourceCanvas.getContext('2d').getImageData(0, 0, w, h);
-            const destData = ctx.createImageData(w, h);
-            
-            for (let y = 0; y < h; y++) {
-                for (let x = 0; x < w; x++) {
-                    const dx = x - cx;
-                    const dy = y - cy;
-                    const r = Math.sqrt(dx * dx + dy * dy);
-                    if (r === 0) {
-                        const destIndex = (y * w + x) * 4;
-                        const srcIndex = (Math.floor(cy) * w + Math.floor(cx)) * 4;
-                         destData.data[destIndex] = imageData.data[srcIndex];
-                         destData.data[destIndex + 1] = imageData.data[srcIndex + 1];
-                         destData.data[destIndex + 2] = imageData.data[srcIndex + 2];
-                         destData.data[destIndex + 3] = 255;
-                        continue;
-                    };
-                    const rNorm = r / (w / 2);
-
-                    let theta = Math.atan2(dy, dx);
-                    
-                    const radialShift = 1 + metrics.warpFactor * Math.pow(rNorm, 1.5);
-                    const twistAngle = metrics.twistFactor * Math.pow(rNorm, 2) * Math.sin(2 * (theta - axisRad));
-                    
-                    theta -= twistAngle;
-                    
-                    const srcR = r / radialShift;
-                    const sx = cx + srcR * Math.cos(theta);
-                    const sy = cy + srcR * Math.sin(theta);
-                    
-                    if (sx >= 0 && sx < w && sy >= 0 && sy < h) {
-                        const srcIndex = (Math.floor(sy) * w + Math.floor(sx)) * 4;
-                        const destIndex = (y * w + x) * 4;
-                        destData.data[destIndex] = imageData.data[srcIndex];
-                        destData.data[destIndex + 1] = imageData.data[srcIndex + 1];
-                        destData.data[destIndex + 2] = imageData.data[srcIndex + 2];
-                        destData.data[destIndex + 3] = 255;
-                    }
-                }
-            }
-            ctx.putImageData(destData, 0, 0);
-        }
-
-        window.onload = updateUI;
     </script>
 </body>
 </html>
