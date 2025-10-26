@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Optical Visualizer v24.6 (Final)</title>
+    <title>Optical Visualizer v24.7 (Definitive)</title>
     <style>
         :root {
             --bg-color: #1e1e24; --surface-color: #2a2a30; --text-color: #e0e0e0;
@@ -167,8 +167,8 @@
             const powerPenaltySphere = Math.pow(baseP, 1.2);
             const powerPenaltyTotal = Math.pow(totalP, 1.2);
 
-            // --- ✨ THE FIX IS HERE ✨ ---
-            // The parentheses are now in the correct place, matching the original formula's logic.
+            // --- ✨ FINAL CORRECTION ✨ ---
+            // Replaced the hardcoded '3.0' with the 'powerPenaltyFactor' variable.
             const clarityDiameterSphere = Math.max(8, maxClearMm - powerPenaltySphere * (powerPenaltyFactor / distortionResistance));
             const clarityDiameterTotal = Math.max(8, maxClearMm - powerPenaltyTotal * (powerPenaltyFactor / distortionResistance));
             // -----------------------------
