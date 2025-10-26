@@ -2,88 +2,263 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Optical Visualizer v25.0 (Definitive)</title>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Optical Visualizer v32.0 (Astig Topography + Labeled Distortion)</title>
     <style>
         :root {
-            --bg-color: #1e1e24; --surface-color: #2a2a30; --text-color: #e0e0e0;
-            --primary-color: #00bcd4; --border-color: #444;
+            --bg-color: #1e1e24;
+            --surface-color: #2a2a30;
+            --text-color: #e0e0e0;
+            --primary-color: #00bcd4;
+            --border-color: #444;
             --metric-value-color: #ffffff;
-            /* Heat Map Colors */
-            --blue-zone: rgba(0, 191, 255, 0.35);
-            --green-zone: rgba(57, 255, 20, 0.35);
-            --yellow-zone: rgba(255, 255, 0, 0.35);
-            --orange-zone: rgba(255, 165, 0, 0.4);
-            --red-zone: rgba(255, 0, 0, 0.45);
+
+            --blue-zone:   rgba(0, 191, 255, 0.35);   /* center crispness */
+            --green-zone:  rgba(57, 255, 20, 0.28);   /* comfy */
+            --yellow-zone: rgba(255, 255, 0, 0.22);   /* functional */
+            --orange-zone: rgba(255, 165, 0, 0.20);   /* strain risk */
+            --red-zone:    rgba(255, 0, 0, 0.18);     /* trash */
+
+            --contour-line: rgba(255,255,255,0.08);
+            --hotspot-color: rgba(255,0,80,0.9);
+            --sector-fill: rgba(255,0,80,0.18);
+            --sector-text: rgba(255,0,80,0.9);
         }
+
         html, body {
             background-color: var(--bg-color);
-            overscroll-behavior: none; /* Prevents pull-to-refresh */
+            overscroll-behavior: none;
         }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-            display: grid; place-items: center; min-height: 100vh;
-            margin: 0; padding: 1em; color: var(--text-color);
+            display: grid;
+            place-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1em;
+            color: var(--text-color);
             -webkit-font-smoothing: antialiased;
         }
-        h1 { font-weight: 300; letter-spacing: 1px; color: var(--primary-color); text-align: center; }
+
+        h1 {
+            font-weight: 300;
+            letter-spacing: 1px;
+            color: var(--primary-color);
+            text-align: center;
+        }
+
         .main-container {
-            display: flex; justify-content: center; align-items: flex-start;
-            gap: 2.5em; flex-wrap: wrap; width: 100%; max-width: 1000px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 2.5em;
+            flex-wrap: wrap;
+            width: 100%;
+            max-width: 1000px;
         }
+
         .controls {
-            background-color: var(--surface-color); padding: 1.5em; border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3); width: 100%; max-width: 320px; border: 1px solid var(--border-color);
-            flex-shrink: 0; box-sizing: border-box;
+            background-color: var(--surface-color);
+            padding: 1.5em;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 360px;
+            border: 1px solid var(--border-color);
+            flex-shrink: 0;
+            box-sizing: border-box;
         }
-        .input-group { margin-bottom: 1.75em; }
+
+        .input-group {
+            margin-bottom: 1.5em;
+        }
         .input-group:last-child { margin-bottom: 0; }
+
         .input-group label {
-            display: block; margin-bottom: 0.6em; font-weight: 500; font-size: 0.9em;
-            color: #aaa; text-transform: uppercase; letter-spacing: 0.5px;
+            display: block;
+            margin-bottom: 0.6em;
+            font-weight: 500;
+            font-size: 0.9em;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        .slider-group { display: flex; align-items: center; gap: 0.5em; }
+
+        .slider-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+            flex-wrap: nowrap;
+        }
+
         .slider-group input[type="range"] {
-            flex-grow: 1; -webkit-appearance: none; appearance: none;
-            height: 8px; background: #444; border-radius: 5px; outline: none;
-            padding: 0; margin: 0;
+            flex-grow: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            background: #444;
+            border-radius: 5px;
+            outline: none;
+            padding: 0;
+            margin: 0;
         }
+
         .slider-group input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none; appearance: none; width: 22px; height: 22px;
-            background: var(--primary-color); cursor: pointer; border-radius: 50%;
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            background: var(--primary-color);
+            cursor: pointer;
+            border-radius: 50%;
         }
-         .slider-group input[type="range"]::-moz-range-thumb {
-            width: 22px; height: 22px;
-            background: var(--primary-color); cursor: pointer; border-radius: 50%;
+        .slider-group input[type="range"]::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            background: var(--primary-color);
+            cursor: pointer;
+            border-radius: 50%;
         }
-        .slider-group span { font-size: 1.1em; font-weight: bold; color: #fff; min-width: 60px; text-align: right; }
+
+        .slider-group span {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #fff;
+            min-width: 60px;
+            text-align: right;
+        }
+
         .precision-btn {
-            background: #444; border: 1px solid var(--border-color); color: var(--text-color);
-            width: 30px; height: 30px; border-radius: 50%; font-size: 1.4em; line-height: 28px;
-            text-align: center; cursor: pointer; user-select: none; flex-shrink: 0;
+            background: #444;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-size: 1.4em;
+            line-height: 28px;
+            text-align: center;
+            cursor: pointer;
+            user-select: none;
+            flex-shrink: 0;
         }
-        #materialName { font-size: 1.0em; font-weight: normal; min-width: 150px; text-align: right; }
-        .visualization-area { display: flex; flex-direction: column; align-items: center; gap: 1.5em; width: 100%; }
+
+        #materialName {
+            font-size: 1.0em;
+            font-weight: normal;
+            min-width: 150px;
+            text-align: right;
+        }
+
+        .cal-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+            flex-wrap: nowrap;
+        }
+
+        .cal-row input[type="number"] {
+            width: 4em;
+            background: #1a1a1f;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 6px;
+            padding: 0.4em 0.5em;
+            font-size: 0.9em;
+            text-align: right;
+        }
+
+        .cal-row button {
+            background: var(--primary-color);
+            color: #000;
+            border: 0;
+            border-radius: 6px;
+            font-size: 0.8em;
+            font-weight: 600;
+            padding: 0.4em 0.6em;
+            cursor: pointer;
+        }
+
+        .calibration-hint {
+            color: #777;
+            font-size: 0.7em;
+            line-height: 1.3em;
+            margin-top: 0.4em;
+        }
+
+        .scale-readout {
+            color: #aaa;
+            font-size: 0.8em;
+            margin-top: 0.4em;
+            font-family: monospace;
+        }
+
+        .visualization-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5em;
+            width: 100%;
+        }
+
         .canvas-wrapper {
             position: relative;
             width: 100%;
             max-width: 600px;
             aspect-ratio: 1 / 1;
             background-color: var(--surface-color);
-            border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.3); border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            border: 1px solid var(--border-color);
         }
+
         #lensCanvas {
             width: 100%;
             height: 100%;
             display: block;
         }
+
         .metrics-box {
-            background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 12px;
-            padding: 1.5em; width: 100%; max-width: 600px; box-sizing: border-box; display: grid; grid-template-columns: repeat(2, 1fr); gap: 1em;
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5em;
+            width: 100%;
+            max-width: 600px;
+            box-sizing: border-box;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1em;
         }
-        .metric { text-align: center; }
-        .metric-label { font-size: 0.8em; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5em; }
-        .metric-value { font-size: 1.8em; font-weight: bold; color: var(--metric-value-color); }
+
+        .metric {
+            text-align: center;
+        }
+
+        .metric-label {
+            font-size: 0.8em;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5em;
+        }
+
+        .metric-value {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: var(--metric-value-color);
+            line-height: 1.2em;
+        }
+
+        .metric-small {
+            font-size: 0.7em;
+            color: #888;
+            line-height: 1.2em;
+            margin-top: 0.4em;
+        }
     </style>
 </head>
 <body>
@@ -91,6 +266,7 @@
         <h1>Lens Visualizer</h1>
         <div class="main-container">
             <div class="controls">
+
                 <div class="input-group">
                     <label>Spherical Power (SPH)</label>
                     <div class="slider-group">
@@ -100,6 +276,7 @@
                         <span id="sphereValue">-6.00</span>
                     </div>
                 </div>
+
                 <div class="input-group">
                     <label>Cylindrical Power (CYL)</label>
                     <div class="slider-group">
@@ -109,6 +286,7 @@
                         <span id="cylinderValue">0.00</span>
                     </div>
                 </div>
+
                 <div class="input-group">
                     <label>Axis</label>
                     <div class="slider-group">
@@ -116,6 +294,7 @@
                         <span id="axisValue">180</span>
                     </div>
                 </div>
+
                 <div class="input-group">
                     <label>Lens Material</label>
                     <div class="slider-group">
@@ -123,130 +302,730 @@
                         <span id="materialName">1.67 HI</span>
                     </div>
                 </div>
+
+                <div class="input-group">
+                    <label>Screen Calibration</label>
+                    <div class="cal-row">
+                        <span style="font-size:0.8em; color:#aaa;">Bar says 50 mm, I measured</span>
+                        <input type="number" id="measuredMm" value="36" min="10" max="100" step="0.1">
+                        <span style="font-size:0.8em; color:#aaa;">mm</span>
+                        <button id="applyCalBtn">Apply</button>
+                    </div>
+                    <div class="calibration-hint">
+                        Measure the white bar with a real ruler. Enter that number.
+                        After Apply, the green zone on-screen = real mm size of your comfort zone.
+                    </div>
+                    <div class="scale-readout">
+                        Scale: <span id="scaleValue">1.00×</span>
+                    </div>
+                </div>
+
             </div>
+
             <div class="visualization-area">
-                <div class="canvas-wrapper"><canvas id="lensCanvas"></canvas></div>
+                <div class="canvas-wrapper">
+                    <canvas id="lensCanvas"></canvas>
+                </div>
+
                 <div class="metrics-box" id="metricsBox">
-                    <div class="metric"><div class="metric-label">Comfort Zone Diameter</div><div class="metric-value" id="clarityDiameterValue">-- mm</div></div>
-                    <div class="metric"><div class="metric-label">Peripheral Distortion</div><div class="metric-value" id="distortionValue">-- %</div></div>
+                    <div class="metric">
+                        <div class="metric-label">Comfort Zone Diameter</div>
+                        <div class="metric-value" id="clarityDiameterValue">-- mm</div>
+                        <div class="metric-small">Area where your eye doesn't have to fight.</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Peripheral Distortion</div>
+                        <div class="metric-value" id="distortionValue">-- %</div>
+                        <div class="metric-small">Higher % = more swim / slant in the edges.</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Worst Zone Angle</div>
+                        <div class="metric-value" id="worstZoneValue">--°</div>
+                        <div class="metric-small">Direction where straight lines bend first.</div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>
-        // --- GET UI ELEMENTS AND SETUP ---
-        const ui = {};
-        ['sphere', 'sphereValue', 'cylinder', 'cylinderValue', 'axis', 'axisValue', 'materialSlider', 'materialName', 'clarityDiameterValue', 'distortionValue', 'sph-minus', 'sph-plus', 'cyl-minus', 'cyl-plus'].forEach(id => ui[id] = document.getElementById(id));
-        const canvas = document.getElementById('lensCanvas');
-        const ctx = canvas.getContext('2d');
-        const controls = document.querySelectorAll('.controls input[type="range"]');
-        let pxPerMm = 4;
-        const materials = [ { index: 1.59, name: '1.59 Poly', factor: 1.0 }, { index: 1.60, name: '1.60 HI', factor: 1.8 }, { index: 1.67, name: '1.67 HI', factor: 2.2 }, { index: 1.74, name: '1.74 HI', factor: 4.5 } ];
-        const offscreenCanvas = document.createElement('canvas');
-        const offscreenCtx = offscreenCanvas.getContext('2d');
+<script>
+/* =========================
+   ELEMENTS / STATE
+========================= */
+const ui = {};
+[
+    'sphere','sphereValue',
+    'cylinder','cylinderValue',
+    'axis','axisValue',
+    'materialSlider','materialName',
+    'clarityDiameterValue','distortionValue','worstZoneValue',
+    'sph-minus','sph-plus',
+    'cyl-minus','cyl-plus',
+    'measuredMm','applyCalBtn','scaleValue'
+].forEach(id => ui[id] = document.getElementById(id));
 
-        // --- DYNAMIC SIZING FUNCTIONS ---
-        function calculatePxPerMm() { const div = document.createElement('div'); div.style.cssText = 'position:absolute; top:-9999px; left:-9999px; width:1mm; height:1mm;'; document.body.appendChild(div); const mmInPx = div.getBoundingClientRect().width; document.body.removeChild(div); return mmInPx > 0 ? mmInPx : 4; }
-        function setupCanvas() { const dpr = window.devicePixelRatio || 1; const rect = canvas.getBoundingClientRect(); if (rect.width === 0 || rect.height === 0) return false; canvas.width = rect.width * dpr; canvas.height = rect.height * dpr; ctx.scale(dpr, dpr); canvas.logicalWidth = rect.width; canvas.logicalHeight = rect.height; return true; }
-        function setupOffscreenCanvas() { offscreenCanvas.width = canvas.width; offscreenCanvas.height = canvas.height; }
+const canvas = document.getElementById('lensCanvas');
+const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-        // --- CORE LOGIC ---
-        function updateUI() { ui.sphereValue.textContent = parseFloat(ui.sphere.value).toFixed(2); ui.cylinderValue.textContent = parseFloat(ui.cylinder.value).toFixed(2); ui.axisValue.textContent = ui.axis.value; ui.materialName.textContent = materials[parseInt(ui.materialSlider.value)].name; drawVisualization(); }
-        controls.forEach(el => el.addEventListener('input', updateUI));
-        const adjustSlider = (slider, step) => { let val = parseFloat(slider.value) + step; slider.value = Math.max(parseFloat(slider.min), Math.min(parseFloat(slider.max), val)); updateUI(); };
-        ui['sph-minus'].addEventListener('click', () => adjustSlider(ui.sphere, -0.25)); ui['sph-plus'].addEventListener('click', () => adjustSlider(ui.sphere, 0.25)); ui['cyl-minus'].addEventListener('click', () => adjustSlider(ui.cylinder, -0.25)); ui['cyl-plus'].addEventListener('click', () => adjustSlider(ui.cylinder, 0.25));
+const offscreenCanvas = document.createElement('canvas');
+const offscreenCtx = offscreenCanvas.getContext('2d', { willReadFrequently: true });
 
-        // FORMULA 1: For the TEXT display (Your original, correct formula)
-        function calculateDisplayMetrics(p) {
-            const baseP = Math.abs(p.sph), totalP = Math.abs(p.sph + p.cyl);
-            const distortionResistance = p.material.factor;
-            const maxClearMm = 45;
-            const powerPenaltySphere = Math.pow(baseP, 1.2);
-            const powerPenaltyTotal = Math.pow(totalP, 1.2);
-            const clarityDiameterSphere = Math.max(8, maxClearMm - powerPenaltySphere * (3.0 / distortionResistance));
-            const clarityDiameterTotal = Math.max(8, maxClearMm - powerPenaltyTotal * (3.0 / distortionResistance));
-            const rawDistortion = Math.pow(baseP, 1.5) + Math.pow(totalP, 1.6);
-            const distortionStrength = Math.min(100, rawDistortion / distortionResistance);
-            return { clarityDiameterSphere, clarityDiameterTotal, distortionStrength };
-        }
+const controls = document.querySelectorAll('.controls input[type="range"]');
 
-        // FORMULA 2: For the VISUAL drawing on screen (More generous formula)
-        function calculateVisualMetrics(p) {
-            const baseP = Math.abs(p.sph), totalP = Math.abs(p.sph + p.cyl);
-            const distortionResistance = p.material.factor;
-            const maxClearMm = 55; // Larger base size
-            const powerPenaltyFactor = 2.5; // Smaller penalty
-            const powerPenaltySphere = Math.pow(baseP, 1.2);
-            const powerPenaltyTotal = Math.pow(totalP, 1.2);
-            const clarityDiameterSphere = Math.max(8, maxClearMm - powerPenaltySphere * (powerPenaltyFactor / distortionResistance));
-            const clarityDiameterTotal = Math.max(8, maxClearMm - powerPenaltyTotal * (powerPenaltyFactor / distortionResistance));
-            const rawDistortion = Math.pow(baseP, 1.5) + Math.pow(totalP, 1.6);
-            const distortionStrength = Math.min(100, rawDistortion / distortionResistance);
-            return { clarityDiameterSphere, clarityDiameterTotal, blurIntensity: distortionStrength / 8, warpFactor: -p.sph * 0.02 * (1 + distortionStrength * 0.01), twistFactor: -p.cyl * 0.1 * (1 + distortionStrength * 0.01) };
-        }
+let dpr = window.devicePixelRatio || 1;
+let basePxPerMmPhysical = 4; // browser guess, gets calibrated
+let calibrationScale = 1.0;  // user correction
 
-        // --- DRAWING FUNCTIONS ---
-        function drawVisualization() {
-            const material = materials[parseInt(ui.materialSlider.value)];
-            const p = { sph: parseFloat(ui.sphere.value) || 0, cyl: parseFloat(ui.cylinder.value) || 0, axis: parseInt(ui.axis.value) || 0, material: material };
-            const w = canvas.logicalWidth;
-            const h = canvas.logicalHeight;
-            const displayMetrics = calculateDisplayMetrics(p);
-            const visualMetrics = calculateVisualMetrics(p);
-            ui.clarityDiameterValue.textContent = `${Math.min(displayMetrics.clarityDiameterSphere, displayMetrics.clarityDiameterTotal).toFixed(1)} mm`;
-            ui.distortionValue.textContent = `${displayMetrics.distortionStrength.toFixed(0)} %`;
-            const optimalRadiusX = (visualMetrics.clarityDiameterSphere / 2) * pxPerMm;
-            const optimalRadiusY = (visualMetrics.clarityDiameterTotal / 2) * pxPerMm;
-            createBackground(offscreenCtx, w, h, optimalRadiusX, optimalRadiusY, p.axis);
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.save();
-            ctx.filter = `blur(${visualMetrics.blurIntensity * (window.devicePixelRatio || 1)}px)`;
-            drawRayMappedView(ctx, offscreenCanvas, p, visualMetrics);
-            ctx.restore();
-        }
+const materials = [
+    { index: 1.59, name: '1.59 Poly', factor: 1.0 },
+    { index: 1.60, name: '1.60 HI',   factor: 1.8 },
+    { index: 1.67, name: '1.67 HI',   factor: 2.2 },
+    { index: 1.74, name: '1.74 HI',   factor: 4.5 }
+];
 
-        function createBackground(context, w, h, r_opt_x, r_opt_y, axis) { const dpr = window.devicePixelRatio || 1; context.save(); context.scale(dpr, dpr); drawClarityMap(context, w, h, r_opt_x, r_opt_y, r_opt_x * 1.7, r_opt_y * 1.7, axis); drawGrid(context, w, h); context.restore(); }
-        function drawClarityMap(context, w, h, r_opt_x, r_opt_y, r_func_x, r_func_y, axis) { const cx = w / 2, cy = h / 2; context.save(); const axisRad = axis * Math.PI / 180; const maxRadius = Math.sqrt(w * w + h * h) / 2; const drawEllipse = (radiusX, radiusY, color) => { context.beginPath(); context.fillStyle = color; context.ellipse(cx, cy, radiusX, radiusY, axisRad, 0, 2 * Math.PI); context.fill(); }; const r_red_x = maxRadius; const r_red_y = maxRadius; const r_orange_x = r_func_x + (maxRadius - r_func_x) * 0.6; const r_orange_y = r_func_y + (maxRadius - r_func_y) * 0.6; drawEllipse(r_red_x, r_red_y, getComputedStyle(document.documentElement).getPropertyValue('--red-zone')); drawEllipse(r_orange_x, r_orange_y, getComputedStyle(document.documentElement).getPropertyValue('--orange-zone')); drawEllipse(r_func_x, r_func_y, getComputedStyle(document.documentElement).getPropertyValue('--yellow-zone')); drawEllipse(r_opt_x, r_opt_y, getComputedStyle(document.documentElement).getPropertyValue('--green-zone')); drawEllipse(r_opt_x * 0.5, r_opt_y * 0.5, getComputedStyle(document.documentElement).getPropertyValue('--blue-zone')); context.restore(); }
-        function drawGrid(context, w, h) { const cx = w / 2, cy = h / 2; context.strokeStyle = 'rgba(0, 0, 0, 0.4)'; context.lineWidth = 1.5; const step = 5 * pxPerMm; for (let i = cx; i <= w; i += step) { context.beginPath(); context.moveTo(i, 0); context.lineTo(i, h); context.stroke(); } for (let i = cx - step; i > 0; i -= step) { context.beginPath(); context.moveTo(i, 0); context.lineTo(i, h); context.stroke(); } for (let i = cy; i <= h; i += step) { context.beginPath(); context.moveTo(0, i); context.lineTo(w, i); context.stroke(); } for (let i = cy - step; i > 0; i -= step) { context.beginPath(); context.moveTo(0, i); context.lineTo(w, i); context.stroke(); } }
-        
-        function drawRayMappedView(ctx, sourceCanvas, p, metrics) {
-            const w = sourceCanvas.width; const h = sourceCanvas.height;
-            const cx = w / 2; const cy = h / 2;
-            const axisRad = p.axis * Math.PI / 180;
-            const imageData = sourceCanvas.getContext('2d').getImageData(0, 0, w, h);
-            const destData = ctx.createImageData(w, h);
-            for (let y = 0; y < h; y++) {
-                // ✨ THIS IS THE CORRECTED LINE ✨
-                for (let x = 0; x < w; x++) {
-                    const dx = x - cx; const dy = y - cy;
-                    const r = Math.sqrt(dx * dx + dy * dy);
-                    if (r === 0) continue;
-                    const rNorm = r / (w / 2);
-                    let theta = Math.atan2(dy, dx);
-                    const radialShift = 1 + metrics.warpFactor * Math.pow(rNorm, 1.5);
-                    const twistAngle = metrics.twistFactor * Math.pow(rNorm, 2) * Math.sin(2 * (theta - axisRad));
-                    theta -= twistAngle;
-                    const srcR = r / radialShift;
-                    const sx = cx + srcR * Math.cos(theta); const sy = cy + srcR * Math.sin(theta);
-                    if (sx >= 0 && sx < w && sy >= 0 && sy < h) {
-                        const srcIndex = (Math.floor(sy) * w + Math.floor(sx)) * 4;
-                        const destIndex = (y * w + x) * 4;
-                        destData.data[destIndex] = imageData.data[srcIndex];
-                        destData.data[destIndex + 1] = imageData.data[srcIndex + 1];
-                        destData.data[destIndex + 2] = imageData.data[srcIndex + 2];
-                        destData.data[destIndex + 3] = 255;
-                    }
-                }
+/* =========================
+   CALIBRATION / CANVAS SETUP
+========================= */
+function calculateBaseScale() {
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:absolute; top:-9999px; left:-9999px; width:1mm; height:1mm;';
+    document.body.appendChild(probe);
+    const mmInCssPx = probe.getBoundingClientRect().width;
+    document.body.removeChild(probe);
+
+    dpr = window.devicePixelRatio || 1;
+    const cssPxPerMm = mmInCssPx > 0 ? mmInCssPx : 3.78;
+    basePxPerMmPhysical = cssPxPerMm * dpr;
+}
+
+function getPxPerMmPhysical() {
+    return basePxPerMmPhysical * calibrationScale;
+}
+
+function setupCanvas() {
+    const rect = canvas.getBoundingClientRect();
+    canvas.width  = Math.round(rect.width  * dpr);
+    canvas.height = Math.round(rect.height * dpr);
+    canvas.logicalWidth  = canvas.width;
+    canvas.logicalHeight = canvas.height;
+
+    offscreenCanvas.width  = canvas.width;
+    offscreenCanvas.height = canvas.height;
+}
+
+/* =========================
+   OPTICAL MODEL
+========================= */
+function calculateOpticalMetrics(p) {
+    const baseP  = Math.abs(p.sph);
+    const totalP = Math.abs(p.sph + p.cyl);
+
+    const distortionResistance = p.material.factor;
+    const maxClearMm = 45;
+
+    const powerPenaltySphere = Math.pow(baseP, 1.2);
+    const powerPenaltyTotal  = Math.pow(totalP, 1.2);
+
+    const clarityDiameterSphere = Math.max(
+        8,
+        maxClearMm - powerPenaltySphere * (3.0 / distortionResistance)
+    );
+
+    const clarityDiameterTotal = Math.max(
+        8,
+        maxClearMm - powerPenaltyTotal * (3.0 / distortionResistance)
+    );
+
+    const rawDistortion = Math.pow(baseP, 1.5) + Math.pow(totalP, 1.6);
+    const distortionStrength = Math.min(100, rawDistortion / distortionResistance);
+
+    return {
+        clarityDiameterSphere,
+        clarityDiameterTotal,
+        distortionStrength,
+        blurIntensity: distortionStrength / 8,
+        warpFactor:   -p.sph * 0.02 * (1 + distortionStrength * 0.01),
+        twistFactor:  -p.cyl * 0.1  * (1 + distortionStrength * 0.01)
+    };
+}
+
+/* =========================
+   ASTIG ANISOTROPY
+========================= */
+/*
+Astigmatism isn't symmetric. Clarity collapses faster in one meridian.
+We model that as an ellipse stretch/squish.
+
+We’ll use cyl magnitude to set anisotropy. More cyl = more elliptical.
+Sign doesn't matter visually for this purpose: -2.00 cyl and +2.00 cyl both mean "asymmetric power".
+*/
+function getAnisotropyForCyl(cyl) {
+    const mag = Math.abs(cyl);
+    // loose heuristic: 0 cyl => 1.0 (circle), 2.00 cyl => ~1.3, 4.00 cyl => ~1.6, clamp.
+    const factor = 1 + 0.15 * mag; // per diopter, 15% stretch
+    return Math.min(factor, 1.7);
+}
+
+/* =========================
+   DISTORTION FIELD
+========================= */
+function distortionScoreAt(dx, dy, w, h, p, metrics) {
+    const r = Math.sqrt(dx*dx + dy*dy);
+    const maxR = Math.sqrt(w*w + h*h) / 2;
+    const rNorm = r / maxR;
+
+    const theta = Math.atan2(dy, dx);
+    const axisRad = (p.axis * Math.PI) / 180;
+
+    const radialComponent =
+        Math.abs(metrics.warpFactor) * Math.pow(rNorm, 1.5);
+
+    const twistComponent =
+        Math.abs(metrics.twistFactor) *
+        Math.pow(rNorm, 2) *
+        Math.abs(Math.sin(2 * (theta - axisRad)));
+
+    return radialComponent + twistComponent;
+}
+
+/* =========================
+   PRE-WARP BACKGROUND (OFFSCREEN)
+========================= */
+/*
+This is what gets ray-bent (the "feel it" layer).
+We now make the clarity zones elliptical based on cyl, and aligned to the axis.
+We also keep radial color bands and a mm grid.
+*/
+function createWarpBackground(offCtx, w, h, p, metrics) {
+    offCtx.clearRect(0, 0, w, h);
+
+    const pxPerMm = getPxPerMmPhysical();
+    const comfortZoneDiameterMm = Math.min(
+        metrics.clarityDiameterSphere,
+        metrics.clarityDiameterTotal
+    );
+
+    const comfortRpx = (comfortZoneDiameterMm / 2) * pxPerMm;
+    const funcRpx    = comfortRpx * 1.7;
+
+    const maxRadiusPx = Math.sqrt(w*w + h*h) / 2;
+    const orangeRpx   = funcRpx + (maxRadiusPx - funcRpx) * 0.6;
+    const redRpx      = maxRadiusPx;
+
+    // draw subtle radial bands so magnification shift is visible
+    drawRadialBands(offCtx, w, h, metrics);
+
+    // draw elliptical topography blobs (anisotropic, axis aligned)
+    drawClarityMapWarpElliptical(
+        offCtx, w, h,
+        comfortRpx, funcRpx, orangeRpx, redRpx,
+        p.axis, p.cyl
+    );
+
+    // draw mm grid (so warping is obvious)
+    drawGridWarp(offCtx, w, h, pxPerMm);
+}
+
+function drawRadialBands(ctx2, w, h, metrics) {
+    const cx = w / 2;
+    const cy = h / 2;
+
+    const bandCount = 8;
+    const maxR = Math.sqrt(w*w + h*h) / 2;
+
+    for (let i = 0; i < bandCount; i++) {
+        const t1 = (i+1) / bandCount;
+        const alpha = 0.05 + 0.25 * (metrics.distortionStrength / 100) * t1;
+        // purple-ish gradient outward
+        const rCol = Math.round(150 + 80*t1);
+        const gCol = Math.round(100 - 60*t1);
+        const bCol = Math.round(255 - 80*t1);
+        ctx2.beginPath();
+        ctx2.fillStyle = `rgba(${rCol},${gCol},${bCol},${alpha})`;
+        ctx2.ellipse(cx, cy, maxR*t1, maxR*t1, 0, 0, 2*Math.PI);
+        ctx2.fill();
+    }
+}
+
+/*
+Draw elliptical zones BEFORE warp:
+- Red/orange/yellow/green/blue blobs, stretched according to cyl magnitude.
+- Orientation = axis.
+*/
+function drawClarityMapWarpElliptical(context, w, h,
+    comfortRpx, funcRpx, orangeRpx, redRpx,
+    axisDeg, cylVal
+){
+    const cx = w / 2;
+    const cy = h / 2;
+    const axisRad = (axisDeg * Math.PI) / 180;
+
+    const aniso = getAnisotropyForCyl(cylVal);
+    // aniso >1 means it's stretched along the axis, and squeezed perpendicular.
+    // We'll define majorRadius = r * aniso, minorRadius = r / aniso.
+
+    function fillAnisoEllipse(baseRadiusPx, cssVarName) {
+        const major = baseRadiusPx * aniso;
+        const minor = baseRadiusPx / aniso;
+        context.beginPath();
+        context.fillStyle = getComputedStyle(document.documentElement)
+            .getPropertyValue(cssVarName);
+        context.ellipse(cx, cy, major, minor, axisRad, 0, 2*Math.PI);
+        context.fill();
+    }
+
+    // paint largest first
+    fillAnisoEllipse(redRpx,    '--red-zone');
+    fillAnisoEllipse(orangeRpx, '--orange-zone');
+    fillAnisoEllipse(funcRpx,   '--yellow-zone');
+    fillAnisoEllipse(comfortRpx,'--green-zone');
+    fillAnisoEllipse(comfortRpx*0.5,'--blue-zone');
+}
+
+function drawGridWarp(context, w, h, pxPerMm) {
+    const cx = w / 2;
+    const cy = h / 2;
+    const stepPx = 5 * pxPerMm;
+
+    context.strokeStyle = 'rgba(0,0,0,0.6)';
+    context.lineWidth = 2;
+
+    for (let x = cx; x <= w; x += stepPx) {
+        context.beginPath();
+        context.moveTo(x, 0);
+        context.lineTo(x, h);
+        context.stroke();
+    }
+    for (let x = cx - stepPx; x >= 0; x -= stepPx) {
+        context.beginPath();
+        context.moveTo(x, 0);
+        context.lineTo(x, h);
+        context.stroke();
+    }
+    for (let y = cy; y <= h; y += stepPx) {
+        context.beginPath();
+        context.moveTo(0, y);
+        context.lineTo(w, y);
+        context.stroke();
+    }
+    for (let y = cy - stepPx; y >= 0; y -= stepPx) {
+        context.beginPath();
+        context.moveTo(0, y);
+        context.lineTo(w, y);
+        context.stroke();
+    }
+}
+
+/* =========================
+   WARP TO VISIBLE CANVAS
+========================= */
+function drawRayMappedView(p, metrics) {
+    const w = offscreenCanvas.width;
+    const h = offscreenCanvas.height;
+
+    const cx = w / 2;
+    const cy = h / 2;
+    const axisRad = (p.axis * Math.PI) / 180;
+
+    const srcData = offscreenCtx.getImageData(0, 0, w, h);
+    const destData = ctx.createImageData(w, h);
+
+    for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+            const dx = x - cx;
+            const dy = y - cy;
+
+            const r = Math.sqrt(dx*dx + dy*dy);
+            if (r === 0) {
+                const ii = (y * w + x) * 4;
+                destData.data[ii    ] = srcData.data[ii    ];
+                destData.data[ii + 1] = srcData.data[ii + 1];
+                destData.data[ii + 2] = srcData.data[ii + 2];
+                destData.data[ii + 3] = 255;
+                continue;
             }
-            ctx.putImageData(destData, 0, 0);
+
+            const rNorm = r / (w / 2);
+            let theta = Math.atan2(dy, dx);
+
+            const radialShift = 1 + metrics.warpFactor * Math.pow(rNorm, 1.5);
+
+            const twistAngle =
+                metrics.twistFactor *
+                Math.pow(rNorm, 2) *
+                Math.sin(2 * (theta - axisRad));
+
+            theta -= twistAngle;
+
+            const srcR = r / radialShift;
+
+            const sx = cx + srcR * Math.cos(theta);
+            const sy = cy + srcR * Math.sin(theta);
+
+            if (sx >= 0 && sx < w && sy >= 0 && sy < h) {
+                const sxi = Math.floor(sx);
+                const syi = Math.floor(sy);
+                const srcIndex = (syi * w + sxi) * 4;
+                const destIndex = (y * w + x) * 4;
+
+                destData.data[destIndex    ] = srcData.data[srcIndex    ];
+                destData.data[destIndex + 1] = srcData.data[srcIndex + 1];
+                destData.data[destIndex + 2] = srcData.data[srcIndex + 2];
+                destData.data[destIndex + 3] = 255;
+            }
+        }
+    }
+
+    ctx.putImageData(destData, 0, 0);
+}
+
+/* =========================
+   CLINICAL OVERLAY (CALIBRATED)
+========================= */
+/*
+This layer is:
+- mm-true (after calibration)
+- ellipses squished/stretched by cyl axis
+- contour lines (anisotropic)
+- shaded/highlighted distortion sectors with WARNING text
+- green outline you can measure with a ruler
+- calibration bar
+*/
+function drawClinicalOverlay(p, metrics) {
+    const w = canvas.logicalWidth;
+    const h = canvas.logicalHeight;
+    const cx = w / 2;
+    const cy = h / 2;
+    const axisRad = (p.axis * Math.PI) / 180;
+    const pxPerMm = getPxPerMmPhysical();
+
+    const comfortZoneDiameterMm = Math.min(
+        metrics.clarityDiameterSphere,
+        metrics.clarityDiameterTotal
+    );
+    const comfortRadiusMm = comfortZoneDiameterMm / 2;
+
+    // physical radii in mm for each qualitative zone
+    const blueRadiusMm   = comfortRadiusMm * 0.5;
+    const greenRadiusMm  = comfortRadiusMm;
+    const yellowRadiusMm = comfortRadiusMm * 1.7;
+
+    const canvasMaxRadiusPx = Math.sqrt(w*w + h*h) / 2;
+    const canvasMaxRadiusMm = canvasMaxRadiusPx / pxPerMm;
+    const orangeRadiusMm = yellowRadiusMm + (canvasMaxRadiusMm - yellowRadiusMm) * 0.6;
+    const redRadiusMm    = canvasMaxRadiusMm;
+
+    const aniso = getAnisotropyForCyl(p.cyl);
+
+    function mmToPx(mmVal) { return mmVal * pxPerMm; }
+
+    // convert mm -> px radii
+    const rBluePx    = mmToPx(blueRadiusMm);
+    const rGreenPx   = mmToPx(greenRadiusMm);
+    const rYellowPx  = mmToPx(yellowRadiusMm);
+    const rOrangePx  = mmToPx(orangeRadiusMm);
+    const rRedPx     = mmToPx(redRadiusMm);
+
+    // fill elliptical zone
+    function fillZone(radiusPx, cssVarName) {
+        const major = radiusPx * aniso;
+        const minor = radiusPx / aniso;
+        ctx.beginPath();
+        ctx.fillStyle = getComputedStyle(document.documentElement)
+            .getPropertyValue(cssVarName);
+        ctx.ellipse(cx, cy, major, minor, axisRad, 0, 2*Math.PI);
+        ctx.fill();
+    }
+
+    // largest -> smallest
+    fillZone(rRedPx,    '--red-zone');
+    fillZone(rOrangePx, '--orange-zone');
+    fillZone(rYellowPx, '--yellow-zone');
+    fillZone(rGreenPx,  '--green-zone');
+    fillZone(rBluePx,   '--blue-zone');
+
+    // draw contour "tension" lines to show clarity drop slope
+    drawContourLinesElliptical(cx, cy, axisRad, aniso, [rBluePx, rGreenPx, rYellowPx, rOrangePx], 1.5);
+
+    // mark distortion hotspots + shaded sectors with text
+    const worst = drawDistortionSectorsAndHotspots(p, metrics);
+
+    // green outline = comfort zone boundary in true mm for ruler
+    const majorComfort = rGreenPx * aniso;
+    const minorComfort = rGreenPx / aniso;
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = 'rgba(57,255,20,0.9)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, majorComfort, minorComfort, axisRad, 0, 2*Math.PI);
+    ctx.stroke();
+
+    // worst zone label for UI
+    ui.worstZoneValue.textContent = Number.isFinite(worst.deg)
+        ? `${worst.deg.toFixed(0)}°`
+        : '--°';
+
+    // calibration bar
+    drawCalibrationBar(pxPerMm, w, h);
+}
+
+function drawContourLinesElliptical(cx, cy, rot, aniso, radiiArray, lineW) {
+    ctx.save();
+    ctx.lineWidth = lineW;
+    ctx.strokeStyle = getComputedStyle(document.documentElement)
+        .getPropertyValue('--contour-line');
+    radiiArray.forEach(r => {
+        const major = r * aniso;
+        const minor = r / aniso;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, major, minor, rot, 0, 2*Math.PI);
+        ctx.stroke();
+    });
+    ctx.restore();
+}
+
+/*
+We:
+- Sample around a ring (20 mm eccentricity).
+- Compute distortionScoreAt() for each direction.
+- If it's bad, we:
+  - draw a translucent wedge sector in that direction
+  - label it "HIGH DISTORTION" or "BLUR / SWIM"
+  - draw a little X marker at the sample point
+
+We also find the absolute worst direction for the metrics panel.
+*/
+function drawDistortionSectorsAndHotspots(p, metrics) {
+    const w = canvas.logicalWidth;
+    const h = canvas.logicalHeight;
+    const cx = w / 2;
+    const cy = h / 2;
+
+    const pxPerMm = getPxPerMmPhysical();
+    const sampleRadiusMm = 20;
+    const rPx = sampleRadiusMm * pxPerMm;
+
+    let worstScore = -Infinity;
+    let worstAngleDeg = NaN;
+
+    // precompute severity threshold to keep spam under control
+    const severityThreshold = 0.12 + 0.002 * metrics.distortionStrength;
+
+    // draw loop
+    for (let deg = 0; deg < 360; deg += 10) {
+        const rad = deg * Math.PI / 180;
+        const x = cx + rPx * Math.cos(rad);
+        const y = cy + rPx * Math.sin(rad);
+
+        const score = distortionScoreAt(
+            x - cx,
+            y - cy,
+            w, h,
+            p,
+            metrics
+        );
+
+        if (score > worstScore) {
+            worstScore = score;
+            worstAngleDeg = deg;
         }
 
-        // --- INITIALIZATION ---
-        function initialize() { pxPerMm = calculatePxPerMm(); if (!setupCanvas()) return; setupOffscreenCanvas(); updateUI(); }
-        window.addEventListener('load', () => { setTimeout(initialize, 50); });
-        let resizeTimeout;
-        window.addEventListener('resize', () => { clearTimeout(resizeTimeout); resizeTimeout = setTimeout(initialize, 100); });
-    </script>
+        if (score > severityThreshold) {
+            // sector wedge
+            drawDistortionSector(cx, cy, deg, 10, rPx * 2);
+
+            // little "X" at that point
+            drawHotspotX(x, y);
+
+            // label text rotated toward that direction
+            drawSectorText(cx, cy, deg, score);
+        }
+    }
+
+    return { score: worstScore, deg: worstAngleDeg };
+}
+
+function drawDistortionSector(cx, cy, centerDeg, spreadDeg, radiusPx) {
+    const startRad = (centerDeg - spreadDeg/2) * Math.PI/180;
+    const endRad   = (centerDeg + spreadDeg/2) * Math.PI/180;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, radiusPx, startRad, endRad, false);
+    ctx.closePath();
+    ctx.fillStyle = getComputedStyle(document.documentElement)
+        .getPropertyValue('--sector-fill');
+    ctx.fill();
+    ctx.restore();
+}
+
+function drawHotspotX(x, y) {
+    ctx.save();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = getComputedStyle(document.documentElement)
+        .getPropertyValue('--hotspot-color');
+    const sz = 6 * (window.devicePixelRatio || 1);
+    ctx.beginPath();
+    ctx.moveTo(x - sz, y - sz);
+    ctx.lineTo(x + sz, y + sz);
+    ctx.moveTo(x - sz, y + sz);
+    ctx.lineTo(x + sz, y - sz);
+    ctx.stroke();
+    ctx.restore();
+}
+
+function drawSectorText(cx, cy, deg, score) {
+    ctx.save();
+    ctx.fillStyle = getComputedStyle(document.documentElement)
+        .getPropertyValue('--sector-text');
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // text a bit out from center toward that direction
+    const labelDistPx = 40 * (window.devicePixelRatio || 1);
+    const rad = deg * Math.PI / 180;
+    const tx = cx + labelDistPx * Math.cos(rad);
+    const ty = cy + labelDistPx * Math.sin(rad);
+
+    // more angry text if score is really high
+    const message = score > 0.4 ? "HIGH DISTORTION" : "BLUR / SWIM";
+
+    // rotate text so it's roughly radial
+    ctx.translate(tx, ty);
+    ctx.rotate(rad);
+    ctx.font = `${10 * (window.devicePixelRatio || 1)}px sans-serif`;
+    ctx.fillText(message, 0, 0);
+    ctx.restore();
+}
+
+function drawCalibrationBar(pxPerMm, w, h) {
+    const barMm = 50;
+    const barHeightMm = 5;
+
+    const barPxW = barMm * pxPerMm;
+    const barPxH = barHeightMm * pxPerMm;
+
+    const marginPx = 20 * (window.devicePixelRatio || 1);
+
+    const x = marginPx;
+    const y = h - barPxH - marginPx;
+
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(x, y, barPxW, barPxH);
+
+    ctx.font = `${12 * (window.devicePixelRatio || 1)}px sans-serif`;
+    ctx.fillStyle = '#fff';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('50 mm', x, y - 4 * (window.devicePixelRatio || 1));
+}
+
+/* =========================
+   MASTER RENDER
+========================= */
+function drawVisualization() {
+    const materialIndex = parseInt(ui.materialSlider.value);
+
+    const p = {
+        sph: parseFloat(ui.sphere.value)    || 0,
+        cyl: parseFloat(ui.cylinder.value)  || 0,
+        axis: parseInt(ui.axis.value)       || 0,
+        material: materials[materialIndex]
+    };
+
+    const w = canvas.logicalWidth;
+    const h = canvas.logicalHeight;
+
+    const metrics = calculateOpticalMetrics(p);
+
+    // Update UI readouts
+    const comfortZoneDiameterMm = Math.min(
+        metrics.clarityDiameterSphere,
+        metrics.clarityDiameterTotal
+    );
+    ui.clarityDiameterValue.textContent =
+        `${comfortZoneDiameterMm.toFixed(1)} mm`;
+    ui.distortionValue.textContent =
+        `${metrics.distortionStrength.toFixed(0)} %`;
+
+    // 1. Build pre-warp (elliptical topo + radial bands + grid)
+    createWarpBackground(offscreenCtx, w, h, p, metrics);
+
+    // 2. Clear main canvas
+    ctx.clearRect(0, 0, w, h);
+
+    // 3. Ray-map warp to visible canvas (this is what "feels" like wearing the lens)
+    drawRayMappedView(p, metrics);
+
+    // 4. Clinical overlay (true-mm, anisotropic, labeled hotspots)
+    drawClinicalOverlay(p, metrics);
+}
+
+/* =========================
+   UI INTERACTIONS
+========================= */
+function updateOpticsAndRedraw() {
+    ui.sphereValue.textContent   = parseFloat(ui.sphere.value).toFixed(2);
+    ui.cylinderValue.textContent = parseFloat(ui.cylinder.value).toFixed(2);
+    ui.axisValue.textContent     = ui.axis.value;
+    ui.materialName.textContent  =
+        materials[parseInt(ui.materialSlider.value)].name;
+    drawVisualization();
+}
+
+function adjustSlider(slider, step) {
+    let val = parseFloat(slider.value) + step;
+    const min = parseFloat(slider.min);
+    const max = parseFloat(slider.max);
+    slider.value = Math.max(min, Math.min(max, val));
+    updateOpticsAndRedraw();
+}
+
+// power sliders
+controls.forEach(el => {
+    el.addEventListener('input', updateOpticsAndRedraw);
+});
+
+ui['sph-minus'].addEventListener('click', () => adjustSlider(ui.sphere,   -0.25));
+ui['sph-plus'] .addEventListener('click', () => adjustSlider(ui.sphere,    0.25));
+ui['cyl-minus'].addEventListener('click', () => adjustSlider(ui.cylinder, -0.25));
+ui['cyl-plus'] .addEventListener('click', () => adjustSlider(ui.cylinder,  0.25));
+
+/* =========================
+   CALIBRATION HANDLER
+========================= */
+// You measure the "50 mm" bar. If it measures 36 mm in real life,
+// calibrationScale = 50 / 36 = ~1.39.
+// That scale flows everywhere (rings, hotspot sampling distance, etc.).
+function applyCalibration() {
+    const measured = parseFloat(ui.measuredMm.value);
+    if (!isFinite(measured) || measured <= 0) return;
+    calibrationScale = 50 / measured;
+    ui.scaleValue.textContent = calibrationScale.toFixed(2) + '×';
+    drawVisualization();
+}
+ui.applyCalBtn.addEventListener('click', applyCalibration);
+
+/* =========================
+   INIT / RESIZE
+========================= */
+function initialize() {
+    calculateBaseScale();
+    setupCanvas();
+    updateOpticsAndRedraw();
+}
+
+window.addEventListener('load', () => {
+    setTimeout(initialize, 50);
+});
+
+let resizeTimeout;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        setupCanvas();
+        drawVisualization();
+    }, 100);
+});
+</script>
 </body>
 </html>
