@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Optical Visualizer v24.7 (Definitive)</title>
+    <title>Optical Visualizer v24.8 (Final)</title>
     <style>
         :root {
             --bg-color: #1e1e24; --surface-color: #2a2a30; --text-color: #e0e0e0;
@@ -160,18 +160,14 @@
         function calculateOpticalMetrics(p) {
             const baseP = Math.abs(p.sph), totalP = Math.abs(p.sph + p.cyl);
             const distortionResistance = p.material.factor;
-
-            const maxClearMm = 55;
-            const powerPenaltyFactor = 2.5;
-
+            
+            // --- ✨ THIS IS THE ORIGINAL, CORRECT MATH ✨ ---
+            const maxClearMm = 45;
             const powerPenaltySphere = Math.pow(baseP, 1.2);
             const powerPenaltyTotal = Math.pow(totalP, 1.2);
-
-            // --- ✨ FINAL CORRECTION ✨ ---
-            // Replaced the hardcoded '3.0' with the 'powerPenaltyFactor' variable.
-            const clarityDiameterSphere = Math.max(8, maxClearMm - powerPenaltySphere * (powerPenaltyFactor / distortionResistance));
-            const clarityDiameterTotal = Math.max(8, maxClearMm - powerPenaltyTotal * (powerPenaltyFactor / distortionResistance));
-            // -----------------------------
+            const clarityDiameterSphere = Math.max(8, maxClearMm - powerPenaltySphere * (3.0 / distortionResistance));
+            const clarityDiameterTotal = Math.max(8, maxClearMm - powerPenaltyTotal * (3.0 / distortionResistance));
+            // ---------------------------------------------
 
             const rawDistortion = Math.pow(baseP, 1.5) + Math.pow(totalP, 1.6);
             const distortionStrength = Math.min(100, rawDistortion / distortionResistance);
