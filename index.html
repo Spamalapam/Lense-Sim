@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Optical Visualizer v24.8 (Final)</title>
+    <title>Optical Visualizer v25.0 (Definitive)</title>
     <style>
         :root {
             --bg-color: #1e1e24; --surface-color: #2a2a30; --text-color: #e0e0e0;
@@ -157,29 +157,90 @@
         const adjustSlider = (slider, step) => { let val = parseFloat(slider.value) + step; slider.value = Math.max(parseFloat(slider.min), Math.min(parseFloat(slider.max), val)); updateUI(); };
         ui['sph-minus'].addEventListener('click', () => adjustSlider(ui.sphere, -0.25)); ui['sph-plus'].addEventListener('click', () => adjustSlider(ui.sphere, 0.25)); ui['cyl-minus'].addEventListener('click', () => adjustSlider(ui.cylinder, -0.25)); ui['cyl-plus'].addEventListener('click', () => adjustSlider(ui.cylinder, 0.25));
 
-        function calculateOpticalMetrics(p) {
+        // FORMULA 1: For the TEXT display (Your original, correct formula)
+        function calculateDisplayMetrics(p) {
             const baseP = Math.abs(p.sph), totalP = Math.abs(p.sph + p.cyl);
             const distortionResistance = p.material.factor;
-            
-            // --- ✨ THIS IS THE ORIGINAL, CORRECT MATH ✨ ---
             const maxClearMm = 45;
             const powerPenaltySphere = Math.pow(baseP, 1.2);
             const powerPenaltyTotal = Math.pow(totalP, 1.2);
             const clarityDiameterSphere = Math.max(8, maxClearMm - powerPenaltySphere * (3.0 / distortionResistance));
             const clarityDiameterTotal = Math.max(8, maxClearMm - powerPenaltyTotal * (3.0 / distortionResistance));
-            // ---------------------------------------------
-
             const rawDistortion = Math.pow(baseP, 1.5) + Math.pow(totalP, 1.6);
             const distortionStrength = Math.min(100, rawDistortion / distortionResistance);
-            return { clarityDiameterSphere, clarityDiameterTotal, distortionStrength, blurIntensity: distortionStrength / 8, warpFactor: -p.sph * 0.02 * (1 + distortionStrength * 0.01), twistFactor: -p.cyl * 0.1 * (1 + distortionStrength * 0.01) };
+            return { clarityDiameterSphere, clarityDiameterTotal, distortionStrength };
+        }
+
+        // FORMULA 2: For the VISUAL drawing on screen (More generous formula)
+        function calculateVisualMetrics(p) {
+            const baseP = Math.abs(p.sph), totalP = Math.abs(p.sph + p.cyl);
+            const distortionResistance = p.material.factor;
+            const maxClearMm = 55; // Larger base size
+            const powerPenaltyFactor = 2.5; // Smaller penalty
+            const powerPenaltySphere = Math.pow(baseP, 1.2);
+            const powerPenaltyTotal = Math.pow(totalP, 1.2);
+            const clarityDiameterSphere = Math.max(8, maxClearMm - powerPenaltySphere * (powerPenaltyFactor / distortionResistance));
+            const clarityDiameterTotal = Math.max(8, maxClearMm - powerPenaltyTotal * (powerPenaltyFactor / distortionResistance));
+            const rawDistortion = Math.pow(baseP, 1.5) + Math.pow(totalP, 1.6);
+            const distortionStrength = Math.min(100, rawDistortion / distortionResistance);
+            return { clarityDiameterSphere, clarityDiameterTotal, blurIntensity: distortionStrength / 8, warpFactor: -p.sph * 0.02 * (1 + distortionStrength * 0.01), twistFactor: -p.cyl * 0.1 * (1 + distortionStrength * 0.01) };
         }
 
         // --- DRAWING FUNCTIONS ---
-        function drawVisualization() { const material = materials[parseInt(ui.materialSlider.value)]; const p = { sph: parseFloat(ui.sphere.value) || 0, cyl: parseFloat(ui.cylinder.value) || 0, axis: parseInt(ui.axis.value) || 0, material: material }; const w = canvas.logicalWidth; const h = canvas.logicalHeight; const metrics = calculateOpticalMetrics(p); ui.clarityDiameterValue.textContent = `${Math.min(metrics.clarityDiameterSphere, metrics.clarityDiameterTotal).toFixed(1)} mm`; ui.distortionValue.textContent = `${metrics.distortionStrength.toFixed(0)} %`; const optimalRadiusX = (metrics.clarityDiameterSphere / 2) * pxPerMm; const optimalRadiusY = (metrics.clarityDiameterTotal / 2) * pxPerMm; createBackground(offscreenCtx, w, h, optimalRadiusX, optimalRadiusY, p.axis); ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.save(); ctx.filter = `blur(${metrics.blurIntensity * (window.devicePixelRatio || 1)}px)`; drawRayMappedView(ctx, offscreenCanvas, p, metrics); ctx.restore(); }
+        function drawVisualization() {
+            const material = materials[parseInt(ui.materialSlider.value)];
+            const p = { sph: parseFloat(ui.sphere.value) || 0, cyl: parseFloat(ui.cylinder.value) || 0, axis: parseInt(ui.axis.value) || 0, material: material };
+            const w = canvas.logicalWidth;
+            const h = canvas.logicalHeight;
+            const displayMetrics = calculateDisplayMetrics(p);
+            const visualMetrics = calculateVisualMetrics(p);
+            ui.clarityDiameterValue.textContent = `${Math.min(displayMetrics.clarityDiameterSphere, displayMetrics.clarityDiameterTotal).toFixed(1)} mm`;
+            ui.distortionValue.textContent = `${displayMetrics.distortionStrength.toFixed(0)} %`;
+            const optimalRadiusX = (visualMetrics.clarityDiameterSphere / 2) * pxPerMm;
+            const optimalRadiusY = (visualMetrics.clarityDiameterTotal / 2) * pxPerMm;
+            createBackground(offscreenCtx, w, h, optimalRadiusX, optimalRadiusY, p.axis);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.filter = `blur(${visualMetrics.blurIntensity * (window.devicePixelRatio || 1)}px)`;
+            drawRayMappedView(ctx, offscreenCanvas, p, visualMetrics);
+            ctx.restore();
+        }
+
         function createBackground(context, w, h, r_opt_x, r_opt_y, axis) { const dpr = window.devicePixelRatio || 1; context.save(); context.scale(dpr, dpr); drawClarityMap(context, w, h, r_opt_x, r_opt_y, r_opt_x * 1.7, r_opt_y * 1.7, axis); drawGrid(context, w, h); context.restore(); }
         function drawClarityMap(context, w, h, r_opt_x, r_opt_y, r_func_x, r_func_y, axis) { const cx = w / 2, cy = h / 2; context.save(); const axisRad = axis * Math.PI / 180; const maxRadius = Math.sqrt(w * w + h * h) / 2; const drawEllipse = (radiusX, radiusY, color) => { context.beginPath(); context.fillStyle = color; context.ellipse(cx, cy, radiusX, radiusY, axisRad, 0, 2 * Math.PI); context.fill(); }; const r_red_x = maxRadius; const r_red_y = maxRadius; const r_orange_x = r_func_x + (maxRadius - r_func_x) * 0.6; const r_orange_y = r_func_y + (maxRadius - r_func_y) * 0.6; drawEllipse(r_red_x, r_red_y, getComputedStyle(document.documentElement).getPropertyValue('--red-zone')); drawEllipse(r_orange_x, r_orange_y, getComputedStyle(document.documentElement).getPropertyValue('--orange-zone')); drawEllipse(r_func_x, r_func_y, getComputedStyle(document.documentElement).getPropertyValue('--yellow-zone')); drawEllipse(r_opt_x, r_opt_y, getComputedStyle(document.documentElement).getPropertyValue('--green-zone')); drawEllipse(r_opt_x * 0.5, r_opt_y * 0.5, getComputedStyle(document.documentElement).getPropertyValue('--blue-zone')); context.restore(); }
         function drawGrid(context, w, h) { const cx = w / 2, cy = h / 2; context.strokeStyle = 'rgba(0, 0, 0, 0.4)'; context.lineWidth = 1.5; const step = 5 * pxPerMm; for (let i = cx; i <= w; i += step) { context.beginPath(); context.moveTo(i, 0); context.lineTo(i, h); context.stroke(); } for (let i = cx - step; i > 0; i -= step) { context.beginPath(); context.moveTo(i, 0); context.lineTo(i, h); context.stroke(); } for (let i = cy; i <= h; i += step) { context.beginPath(); context.moveTo(0, i); context.lineTo(w, i); context.stroke(); } for (let i = cy - step; i > 0; i -= step) { context.beginPath(); context.moveTo(0, i); context.lineTo(w, i); context.stroke(); } }
-        function drawRayMappedView(ctx, sourceCanvas, p, metrics) { const w = sourceCanvas.width; const h = sourceCanvas.height; const cx = w / 2; const cy = h / 2; const axisRad = p.axis * Math.PI / 180; const imageData = sourceCanvas.getContext('2d').getImageData(0, 0, w, h); const destData = ctx.createImageData(w, h); for (let y = 0; y < h; y++) { for (let x = 0; x < w; x++) { const dx = x - cx; const dy = y - cy; const r = Math.sqrt(dx * dx + dy * dy); if (r === 0) continue; const rNorm = r / (w / 2); let theta = Math.atan2(dy, dx); const radialShift = 1 + metrics.warpFactor * Math.pow(rNorm, 1.5); const twistAngle = metrics.twistFactor * Math.pow(rNorm, 2) * Math.sin(2 * (theta - axisRad)); theta -= twistAngle; const srcR = r / radialShift; const sx = cx + srcR * Math.cos(theta); const sy = cy + srcR * Math.sin(theta); if (sx >= 0 && sx < w && sy >= 0 && sy < h) { const srcIndex = (Math.floor(sy) * w + Math.floor(sx)) * 4; const destIndex = (y * w + x) * 4; destData.data[destIndex] = imageData.data[srcIndex]; destData.data[destIndex + 1] = imageData.data[srcIndex + 1]; destData.data[destIndex + 2] = imageData.data[srcIndex + 2]; destData.data[destIndex + 3] = 255; } } } ctx.putImageData(destData, 0, 0); }
+        
+        function drawRayMappedView(ctx, sourceCanvas, p, metrics) {
+            const w = sourceCanvas.width; const h = sourceCanvas.height;
+            const cx = w / 2; const cy = h / 2;
+            const axisRad = p.axis * Math.PI / 180;
+            const imageData = sourceCanvas.getContext('2d').getImageData(0, 0, w, h);
+            const destData = ctx.createImageData(w, h);
+            for (let y = 0; y < h; y++) {
+                // ✨ THIS IS THE CORRECTED LINE ✨
+                for (let x = 0; x < w; x++) {
+                    const dx = x - cx; const dy = y - cy;
+                    const r = Math.sqrt(dx * dx + dy * dy);
+                    if (r === 0) continue;
+                    const rNorm = r / (w / 2);
+                    let theta = Math.atan2(dy, dx);
+                    const radialShift = 1 + metrics.warpFactor * Math.pow(rNorm, 1.5);
+                    const twistAngle = metrics.twistFactor * Math.pow(rNorm, 2) * Math.sin(2 * (theta - axisRad));
+                    theta -= twistAngle;
+                    const srcR = r / radialShift;
+                    const sx = cx + srcR * Math.cos(theta); const sy = cy + srcR * Math.sin(theta);
+                    if (sx >= 0 && sx < w && sy >= 0 && sy < h) {
+                        const srcIndex = (Math.floor(sy) * w + Math.floor(sx)) * 4;
+                        const destIndex = (y * w + x) * 4;
+                        destData.data[destIndex] = imageData.data[srcIndex];
+                        destData.data[destIndex + 1] = imageData.data[srcIndex + 1];
+                        destData.data[destIndex + 2] = imageData.data[srcIndex + 2];
+                        destData.data[destIndex + 3] = 255;
+                    }
+                }
+            }
+            ctx.putImageData(destData, 0, 0);
+        }
 
         // --- INITIALIZATION ---
         function initialize() { pxPerMm = calculatePxPerMm(); if (!setupCanvas()) return; setupOffscreenCanvas(); updateUI(); }
