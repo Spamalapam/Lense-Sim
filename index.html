@@ -4,36 +4,474 @@
     <meta charset="UTF-8">
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Optical Visualizer v32.0 (Astig Topography + Labeled Distortion)</title>
+    <title>Optical Visualizer v44.0 (Definitive Hybrid)</title>
     <style>
         :root {
-            --bg-color: #1e1e24;
-            --surface-color: #2a2a30;
-            --text-color: #e0e0e0;
-            --primary-color: #00bcd4;
-            --border-color: #444;
-            --metric-value-color: #ffffff;
-
-            --blue-zone:   rgba(0, 191, 255, 0.35);   /* center crispness */
-            --green-zone:  rgba(57, 255, 20, 0.28);   /* comfy */
-            --yellow-zone: rgba(255, 255, 0, 0.22);   /* functional */
-            --orange-zone: rgba(255, 165, 0, 0.20);   /* strain risk */
-            --red-zone:    rgba(255, 0, 0, 0.18);     /* trash */
-
-            --contour-line: rgba(255,255,255,0.08);
-            --hotspot-color: rgba(255,0,80,0.9);
-            --sector-fill: rgba(255,0,80,0.18);
-            --sector-text: rgba(255,0,80,0.9);
+            --bg-color: #1e1e24; --surface-color: #2a2a30; --text-color: #e0e0e0;
+            --primary-color: #00bcd4; --border-color: #444; --metric-value-color: #ffffff;
+            /* SV Colors */
+            --blue-zone:   rgba(0, 191, 255, 0.35); --green-zone:  rgba(57, 255, 20, 0.28);
+            --yellow-zone: rgba(255, 255, 0, 0.22); --orange-zone: rgba(255, 165, 0, 0.20);
+            --red-zone:    rgba(255, 0, 0, 0.18);
+            /* Progressive Heatmap Colors */
+            --heat-blue:   rgba(0, 0, 255, 0.4); --heat-cyan:   rgba(0, 191, 255, 0.4);
+            --heat-green:  rgba(57, 255, 20, 0.4); --heat-yellow: rgba(255, 255, 0, 0.4);
+            --heat-orange: rgba(255, 165, 0, 0.4); --heat-red:    rgba(255, 0, 0, 0.4);
+            --progressive-bg: rgb(40,40,45); --grid-color: rgba(255,255,255,0.15);
+            --contour-line: rgba(255,255,255,0.08); --hotspot-color: rgba(255,0,80,0.9);
         }
-
-        html, body {
-            background-color: var(--bg-color);
-            overscroll-behavior: none;
-        }
-
+        html, body { background-color: var(--bg-color); overscroll-behavior: none; height: 100%; margin: 0; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-            display: grid;
+            display: flex; flex-direction: column; color: var(--text-color); -webkit-font-smoothing: antialiased;
+        }
+        h1 { font-weight: 300; letter-spacing: 1px; color: var(--primary-color); text-align: center; padding: 0.5em 1em 0; }
+        .main-container {
+            display: flex; justify-content: center; align-items: flex-start;
+            gap: 2em; width: 100%; max-width: 1200px; padding: 1em; box-sizing: border-box;
+            flex-grow: 1; margin: 0 auto;
+        }
+        .controls {
+            background-color: var(--surface-color); padding: 1.5em; border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3); width: 360px;
+            border: 1px solid var(--border-color); flex-shrink: 0;
+        }
+        .input-group { margin-bottom: 1.5em; }
+        .input-group:last-child { margin-bottom: 0; }
+        .input-group label {
+            display: block; margin-bottom: 0.6em; font-weight: 500; font-size: 0.9em;
+            color: #aaa; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .slider-group { display: flex; align-items: center; gap: 0.5em; }
+        .slider-group input[type="range"] {
+            flex-grow: 1; -webkit-appearance: none; appearance: none;
+            height: 8px; background: #444; border-radius: 5px; outline: none; padding: 0; margin: 0;
+        }
+        .slider-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; width: 22px; height: 22px;
+            background: var(--primary-color); cursor: pointer; border-radius: 50%;
+        }
+        .precision-btn {
+            background: #444; border: 1px solid var(--border-color); color: var(--text-color);
+            width: 30px; height: 30px; border-radius: 50%; font-size: 1.4em;
+            line-height: 28px; text-align: center; cursor: pointer; user-select: none; flex-shrink: 0;
+        }
+        .slider-group span { font-size: 1.1em; font-weight: bold; color: #fff; min-width: 60px; text-align: right; }
+        .cal-row { display: flex; align-items: center; gap: 0.5em; }
+        .cal-row input[type="number"] { width: 4em; background: #1a1a1f; color: #fff; border: 1px solid #555; border-radius: 6px; padding: 0.4em 0.5em; font-size: 0.9em; text-align: right; }
+        .cal-row button { background: var(--primary-color); color: #000; border: 0; border-radius: 6px; font-size: 0.8em; font-weight: 600; padding: 0.4em 0.6em; cursor: pointer; }
+        .calibration-hint, .metric-small { color: #777; font-size: 0.7em; line-height: 1.3em; margin-top: 0.4em; }
+        .scale-readout { color: #aaa; font-size: 0.8em; margin-top: 0.4em; font-family: monospace; }
+        .toggle-row, .lens-side-row { display: flex; align-items: center; gap: 1em; font-size: 0.9em; color: #ddd; }
+        .toggle-row input[type="checkbox"], .lens-side-row input[type="radio"] { accent-color: var(--primary-color); margin-right: -0.5em; }
+        #progressiveControls { display: none; border-top: 1px solid var(--border-color); margin-top: 1.5em; padding-top: 1.5em;}
+        .visualization-area { display: flex; flex-direction: column; align-items: center; gap: 1.5em; flex-grow: 1; width: 100%; }
+        .canvas-wrapper {
+            position: relative; width: 100%; max-width: 80vh;
+            flex-grow: 1; aspect-ratio: 1 / 1;
+            background-color: var(--surface-color); border-radius: 12px; overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3); border: 1px solid var(--border-color);
+        }
+        #lensCanvas { width: 100%; height: 100%; display: block; }
+        .metrics-box {
+            background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 12px;
+            padding: 1.5em; width: 100%; max-width: 80vh; box-sizing: border-box;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 1em;
+        }
+        .metric { text-align: center; }
+        .metric-label { font-size: 0.8em; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5em; }
+        .metric-value { font-size: 1.4em; font-weight: bold; color: var(--metric-value-color); line-height: 1.2em; }
+
+        .controls-header { display: none; }
+        @media (max-width: 900px) {
+            .main-container { flex-direction: column-reverse; align-items: center; padding-bottom: 70px; }
+            .visualization-area { max-width: 100%; }
+            .canvas-wrapper, .metrics-box { max-width: 100%; }
+            .controls {
+                position: fixed; bottom: 10px; left: 10px; right: 10px; width: auto;
+                max-height: calc(100% - 100px); overflow-y: auto; z-index: 10;
+                transition: transform 0.3s ease-in-out, max-height 0.3s ease-in-out;
+                background-color: rgba(42, 42, 48, 0.85);
+                backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            }
+            .controls.is-collapsed .controls-body { display: none; }
+            .controls.is-collapsed {
+                transform: translateY(calc(100% - 50px));
+                max-height: 50px; padding: 0;
+            }
+            .controls-header {
+                display: block; text-align: center; padding: 15px;
+                font-weight: 500; background-color: rgba(0,0,0,0.2);
+                cursor: pointer; user-select: none;
+            }
+            .controls-body { padding: 1.5em; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Lens Visualizer</h1>
+    <div class="main-container">
+        <div class="controls is-collapsed">
+            <div class="controls-header">Show Controls</div>
+            <div class="controls-body">
+                <div class="input-group"><label>Spherical Power (SPH)</label><div class="slider-group"><div class="precision-btn" id="sph-minus">-</div><input type="range" id="sphere" min="-15" max="10" value="-6.00" step="0.25"><div class="precision-btn" id="sph-plus">+</div><span id="sphereValue">-6.00</span></div></div>
+                <div class="input-group"><label>Cylindrical Power (CYL)</label><div class="slider-group"><div class="precision-btn" id="cyl-minus">-</div><input type="range" id="cylinder" min="-6" max="6" value="0.00" step="0.25"><div class="precision-btn" id="cyl-plus">+</div><span id="cylinderValue">0.00</span></div></div>
+                <div class="input-group"><label>Axis</label><div class="slider-group"><input type="range" id="axis" min="0" max="180" value="180" step="1"><span id="axisValue">180</span></div></div>
+                <div class="input-group"><label>Lens Material</label><div class="slider-group"><input type="range" id="materialSlider" min="0" max="3" value="2" step="1"><span id="materialName">1.67 HI</span></div></div>
+                <div class="input-group">
+                    <label>Progressive Corridor</label>
+                    <div class="toggle-row"><label><input type="checkbox" id="progressiveToggle" /><span>Enable Progressive Simulation</span></label></div>
+                    <div id="progressiveControls">
+                        <div class="input-group" style="margin-top: 1.5em;">
+                            <label>ADD Power</label>
+                            <div class="slider-group">
+                                <input type="range" id="addPower" min="0.75" max="3.50" value="2.00" step="0.25">
+                                <span id="addPowerValue">+2.00</span>
+                            </div>
+                        </div>
+                        <div class="lens-side-row" style="margin-top: -1em;">
+                            <label>Lens side:</label>
+                            <label><input type="radio" name="lensSide" id="lensRight" value="R" checked><span>Right</span></label>
+                            <label><input type="radio" name="lensSide" id="lensLeft" value="L"><span>Left</span></label>
+                        </div>
+                    </div>
+                </div>
+                <div class="input-group"><label>Screen Calibration</label><div class="cal-row"><span style="font-size:0.8em; color:#aaa;">Bar says 50 mm, I measured</span><input type="number" id="measuredMm" value="36" min="10" max="100" step="0.1"><span style="font-size:0.8em; color:#aaa;">mm</span><button id="applyCalBtn">Apply</button></div><div class="calibration-hint">Measure the white bar with a real ruler. After Apply, visuals are in true mm.</div><div class="scale-readout">Scale: <span id="scaleValue">1.00×</span></div></div>
+            </div>
+        </div>
+        <div class="visualization-area">
+            <div class="canvas-wrapper"><canvas id="lensCanvas"></canvas></div>
+            <div class="metrics-box" id="metricsBox">
+                <div class="metric"><div class="metric-label">Comfort Zone</div><div class="metric-value" id="clarityDiameterValue">-- mm</div><div class="metric-small">Central clarity footprint.</div></div>
+                <div class="metric"><div class="metric-label">Distortion</div><div class="metric-value" id="distortionValue">-- %</div><div class="metric-small">Higher % = more swim/bend.</div></div>
+                <div class="metric"><div class="metric-label">Worst Angle</div><div class="metric-value" id="worstZoneValue">--°</div><div class="metric-small">Direction of max swim/bend.</div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// =========================
+// SETUP
+// =========================
+const ui = {};
+['sphere','sphereValue','cylinder','cylinderValue','axis','axisValue','materialSlider','materialName',
+ 'clarityDiameterValue','distortionValue','worstZoneValue','sph-minus','sph-plus','cyl-minus','cyl-plus',
+ 'measuredMm','applyCalBtn','scaleValue','progressiveToggle','progressiveControls','addPower','addPowerValue',
+ 'lensRight','lensLeft'].forEach(id => ui[id] = document.getElementById(id));
+
+const canvas = document.getElementById('lensCanvas');
+const ctx = canvas.getContext('2d', { willReadFrequently: true });
+const offscreenCanvas = document.createElement('canvas');
+const offscreenCtx = offscreenCanvas.getContext('2d', { willReadFrequently: true });
+const controls = document.querySelectorAll('.controls input');
+const controlsContainer = document.querySelector('.controls');
+const controlsHeader = document.querySelector('.controls-header');
+
+let dpr = 1, basePxPerMmPhysical = 4, calibrationScale = 1.0;
+const materials = [{ index: 1.59, name: '1.59 Poly', factor: 1.0 },{ index: 1.60, name: '1.60 HI', factor: 1.8 },{ index: 1.67, name: '1.67 HI', factor: 2.2 },{ index: 1.74, name: '1.74 HI', factor: 4.5 }];
+
+// =========================
+// UTILITIES & CALIBRATION
+// =========================
+function lerp(a,b,t){return a+(b-a)*t;}
+function clamp(v,min,max){return Math.max(min, Math.min(max,v));}
+function heatColor(t){
+    t = clamp(t,0,1); let r,g,b;
+    if(t<0.25){ r=lerp(0,57,t/0.25); g=lerp(191,255,t/0.25); b=lerp(255,20,t/0.25); }
+    else if(t<0.5){ r=lerp(57,255,(t-0.25)/0.25); g=255; b=lerp(20,0,(t-0.25)/0.25); }
+    else if(t<0.75){ r=255; g=lerp(255,165,(t-0.5)/0.25); b=0; }
+    else{ r=255; g=lerp(165,0,(t-0.75)/0.25); b=0; }
+    return `rgba(${r.toFixed(0)},${g.toFixed(0)},${b.toFixed(0)},0.9)`;
+}
+function calculateBaseScale() {
+    const probe = document.createElement('div');
+    probe.style.cssText='position:absolute;top:-9999px;width:1mm;height:1mm;';
+    document.body.appendChild(probe);
+    dpr = window.devicePixelRatio || 1;
+    basePxPerMmPhysical = (probe.getBoundingClientRect().width > 0 ? probe.getBoundingClientRect().width : 3.78) * dpr;
+    document.body.removeChild(probe);
+}
+function getPxPerMm() { return basePxPerMmPhysical * calibrationScale; }
+function setupCanvas() {
+    const rect = canvas.getBoundingClientRect(); dpr = window.devicePixelRatio||1;
+    canvas.width=Math.round(rect.width*dpr); canvas.height=Math.round(rect.height*dpr);
+    canvas.logicalWidth=canvas.width; canvas.logicalHeight=canvas.height;
+    offscreenCanvas.width=canvas.width; offscreenCanvas.height=canvas.height;
+}
+
+// =========================
+// OPTICAL MODELS
+// =========================
+function calculateSVMetrics(p) {
+    const baseP=Math.abs(p.sph), totalP=Math.abs(p.sph+p.cyl);
+    const dR=p.material.factor, maxClear=45;
+    const pps=Math.pow(baseP,1.2), ppt=Math.pow(totalP,1.2);
+    const cds=Math.max(8,maxClear-pps*(3.0/dR));
+    const cdt=Math.max(8,maxClear-ppt*(3.0/dR));
+    const rawD=Math.pow(baseP,1.5)+Math.pow(totalP,1.6);
+    const dS=Math.min(100,rawD/dR);
+    return { cds, cdt, dS, blur:dS/8, warp:-p.sph*0.02*(1+dS*0.01), twist:-p.cyl*0.1*(1+dS*0.01) };
+}
+function getAnisotropy(cyl){ return Math.min(1 + 0.15 * Math.abs(cyl), 1.7); }
+function distortionScoreAt(dx, dy, w, h, p, metrics) {
+    const r=Math.sqrt(dx*dx+dy*dy), maxR=Math.sqrt(w*w+h*h)/2, rNorm=r/maxR;
+    const theta=Math.atan2(dy,dx), axisRad=(p.axis*Math.PI)/180;
+    const radial=Math.abs(metrics.warp)*Math.pow(rNorm,1.5);
+    const twist=Math.abs(metrics.twist)*Math.pow(rNorm,2)*Math.abs(Math.sin(2*(theta-axisRad)));
+    return radial+twist;
+}
+
+// =========================
+// BACKGROUND & OVERLAY DRAWING
+// =========================
+function createWarpBackground(offCtx, w, h, p, metrics) {
+    offCtx.clearRect(0, 0, w, h);
+    if (p.prog) {
+        drawProgressiveHeatMap(offCtx, w, h, p, metrics);
+    } else {
+        drawSVHeatmap(offCtx, w, h, p, metrics);
+    }
+}
+
+function drawSVHeatmap(ctx2, w, h, p, metrics){
+    const cx=w/2, cy=h/2, pxPerMm=getPxPerMm();
+    const comfortRpx=Math.min(metrics.cds,metrics.cdt)/2*pxPerMm;
+    const funcRpx=comfortRpx*1.7;
+    const maxRpx=Math.sqrt(w*w+h*h)/2;
+    const orangeRpx=funcRpx+(maxRpx-funcRpx)*0.6;
+    const axisRad=(p.axis*Math.PI)/180, aniso=getAnisotropy(p.cyl);
+    function fill(r,c){ ctx2.fillStyle=c; ctx2.beginPath(); ctx2.ellipse(cx,cy,r*aniso,r/aniso,axisRad,0,2*Math.PI); ctx2.fill(); }
+    fill(maxRpx,'rgba(255,0,0,0.18)'); fill(orangeRpx,'rgba(255,165,0,0.20)');
+    fill(funcRpx,'rgba(255,255,0,0.22)'); fill(comfortRpx,'rgba(57,255,20,0.28)');
+    fill(comfortRpx*0.5,'rgba(0,191,255,0.35)');
+    drawGrid(ctx2, w, h, 5*pxPerMm, 'rgba(0,0,0,0.4)');
+}
+
+function drawProgressiveHeatMap(ctx2, w, h, p, metrics){
+    const pxPerMm=getPxPerMm(), cx=w/2, cy=h/2;
+    const mapRadiusMm=30, mapRadiusPx=mapRadiusMm*pxPerMm, mapRadiusSq=mapRadiusPx*mapRadiusPx;
+    const dropMm=11, insetMm=3, nasalSign=(p.side==='R'?-1:1);
+    const dropPx=dropMm*pxPerMm, insetPx=insetMm*pxPerMm;
+    const dStrength=clamp(metrics.dS/100,0,1);
+    const baseWidthTop=lerp(12, 5, dStrength), baseWidthBot=lerp(7, 4, dStrength);
+    
+    function centerX(y){ const t=clamp((y-cy)/dropPx,0,1); return cx+nasalSign*insetPx*(t*(1-0.3*t)-0.15*Math.pow(t,3)); }
+    function halfWidth(y){ const t=clamp((y-cy)/dropPx,0,1); return (lerp(baseWidthTop,baseWidthBot,t)*(1-0.6*Math.sin(Math.PI*t)))*pxPerMm; }
+
+    ctx2.fillStyle='rgb(40,40,45)'; ctx2.fillRect(0,0,w,h);
+    const imgData=ctx2.getImageData(0,0,w,h), data=imgData.data;
+
+    for(let y=0;y<h;y++){
+        for(let x=0;x<w;x++){
+            const dx=x-cx, dy=y-cy;
+            if(dx*dx+dy*dy>mapRadiusSq) continue;
+            const cX=centerX(y), hW=halfWidth(y)||1;
+            const distFromCorr=Math.abs(x-cX)/hW;
+            let vPenalty=0;
+            if(y<cy-6*pxPerMm) vPenalty=((cy-6*pxPerMm)-y)/(6*pxPerMm);
+            if(y>cy+dropPx+4*pxPerMm) vPenalty=(y-(cy+dropPx+4*pxPerMm))/(6*pxPerMm);
+            const astigPenalty=clamp(distortionScoreAt(dx,dy,w,h,p,metrics)*3.0,0,5);
+            const nasalBoost=clamp((x-cx)*nasalSign>0?(x-cx)*nasalSign/(10*pxPerMm):0,0,1.2)*clamp((y-cy)/dropPx,0,1);
+            let clarityScore = distFromCorr*(1.2+dStrength*2.0)+astigPenalty*(0.8+nasalBoost)+clamp(vPenalty,0,2)*0.7;
+            clarityScore*=(0.6+0.4*clamp((y-cy)/dropPx,0,1));
+            const col=heatColor(clamp(clarityScore/3.5,0,1));
+            const parts=col.match(/rgba\((\d+),(\d+),(\d+),([\d.]+)\)/);
+            const idx=(y*w+x)*4;
+            data[idx]=parseInt(parts[1]); data[idx+1]=parseInt(parts[2]); data[idx+2]=parseInt(parts[3]); data[idx+3]=255;
+        }
+    }
+    ctx2.putImageData(imgData,0,0);
+    drawGrid(ctx2, w, h, 10*pxPerMm, 'rgba(255,255,255,0.15)');
+}
+
+function drawGrid(ctx2, w, h, step, color) {
+    ctx2.strokeStyle=color; ctx2.lineWidth=1*dpr;
+    for(let i=w/2;i<=w;i+=step){ ctx2.beginPath();ctx2.moveTo(i,0);ctx2.lineTo(i,h);ctx2.stroke(); }
+    for(let i=w/2-step;i>=0;i-=step){ ctx2.beginPath();ctx2.moveTo(i,0);ctx2.lineTo(i,h);ctx2.stroke(); }
+    for(let i=h/2;i<=h;i+=step){ ctx2.beginPath();ctx2.moveTo(0,i);ctx2.lineTo(w,i);ctx2.stroke(); }
+    for(let i=h/2-step;i>=0;i-=step){ ctx2.beginPath();ctx2.moveTo(0,i);ctx2.lineTo(w,i);ctx2.stroke(); }
+}
+
+// =========================
+// RAY-MAPPED VIEW (WARP EFFECT)
+// =========================
+function drawRayMappedView(p, metrics) {
+    const w=offscreenCanvas.width, h=offscreenCanvas.height;
+    const cx=w/2, cy=h/2;
+    const axisRad=(p.axis*Math.PI)/180;
+    const srcData=offscreenCtx.getImageData(0,0,w,h);
+    const destData=ctx.createImageData(w,h);
+    const pxPerMm=getPxPerMm();
+
+    for(let y=0;y<h;y++){
+        for(let x=0;x<w;x++){
+            const dx=x-cx, dy=y-cy;
+            let warp=metrics.warp, twist=metrics.twist;
+            const r=Math.sqrt(dx*dx+dy*dy);
+            if (r === 0) continue;
+
+            if(p.prog){
+                let localAdd = 0;
+                const addPower = p.add || 0;
+                if(dy > 0) localAdd = clamp(dy/(11*pxPerMm), 0, 1) * addPower;
+                const progWarpMultiplier = 1.3, progTwistMultiplier = 1.5;
+                warp = -(p.sph+localAdd)*0.02*(1+metrics.dS*0.01) * progWarpMultiplier;
+                twist = metrics.twist * progTwistMultiplier;
+            }
+
+            const rNorm=r/(w/2); let theta=Math.atan2(dy,dx);
+            const radialShift=1+warp*Math.pow(rNorm,1.5);
+            const twistAngle=twist*Math.pow(rNorm,2)*Math.sin(2*(theta-axisRad));
+            theta-=twistAngle;
+            const srcR=r/radialShift;
+            const sx=cx+srcR*Math.cos(theta), sy=cy+srcR*Math.sin(theta);
+            if(sx>=0&&sx<w&&sy>=0&&sy<h){
+                const srcIdx=(Math.floor(sy)*w+Math.floor(sx))*4;
+                const destIdx=(y*w+x)*4;
+                destData.data[destIdx]=srcData.data[srcIdx]; destData.data[destIdx+1]=srcData.data[srcIdx+1];
+                destData.data[destIdx+2]=srcData.data[srcIdx+2]; destData.data[destIdx+3]=255;
+            }
+        }
+    }
+    ctx.putImageData(destData,0,0);
+}
+
+// =========================
+// CLINICAL OVERLAY & HOTSPOTS
+// =========================
+function drawClinicalOverlay(p, metrics) {
+    const w=canvas.logicalWidth, h=canvas.logicalHeight, pxPerMm=getPxPerMm();
+    if(!p.prog){
+        const cx=w/2, cy=h/2, axisRad=(p.axis*Math.PI)/180;
+        const comfortR=Math.min(metrics.cds,metrics.cdt)/2*pxPerMm;
+        const aniso=getAnisotropy(p.cyl);
+        ctx.lineWidth=4; ctx.strokeStyle='rgba(57,255,20,0.9)'; ctx.beginPath();
+        ctx.ellipse(cx,cy,comfortR*aniso,comfortR/aniso,axisRad,0,2*Math.PI); ctx.stroke();
+    } else {
+        const cx=w/2, cy=h/2;
+        const dropMm=11, insetMm=3, nasalSign=(p.side==='R'?-1:1);
+        const nearCx=cx+insetMm*nasalSign*pxPerMm, nearCy=cy+dropMm*pxPerMm;
+        ctx.lineWidth=3; ctx.strokeStyle='rgba(255,255,0,0.9)';
+        ctx.beginPath();ctx.ellipse(cx,cy,4*pxPerMm,4*pxPerMm,0,0,2*Math.PI);ctx.stroke();
+        ctx.beginPath();ctx.ellipse(nearCx,nearCy,4.5*pxPerMm,4.5*pxPerMm,0,0,2*Math.PI);ctx.stroke();
+    }
+    const worst=drawDistortionSectors(p,metrics);
+    ui.worstZoneValue.textContent=Number.isFinite(worst.deg)?`${worst.deg.toFixed(0)}°`:'--°';
+    drawCalibrationBar(pxPerMm,w,h);
+}
+function drawDistortionSectors(p, metrics){
+    const w=canvas.logicalWidth, h=canvas.logicalHeight, cx=w/2, cy=h/2, pxPerMm=getPxPerMm();
+    const rPx=20*pxPerMm; let worstScore=-Infinity, worstAngle=NaN;
+    const threshold=0.12+0.002*metrics.dS;
+    for(let deg=0;deg<360;deg+=10){
+        const rad=deg*Math.PI/180;
+        const score=distortionScoreAt(rPx*Math.cos(rad),rPx*Math.sin(rad),w,h,p,metrics);
+        if(score>worstScore){worstScore=score;worstAngle=deg;}
+        if(score>threshold){
+            const start=(deg-5)*Math.PI/180, end=(deg+5)*Math.PI/180;
+            ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,rPx*2,start,end);ctx.closePath();
+            ctx.fillStyle='rgba(255,0,80,0.18)'; ctx.fill();
+        }
+    }
+    return {score:worstScore, deg:worstAngle};
+}
+function drawCalibrationBar(pxPerMm,w,h){
+    const barW=50*pxPerMm, barH=5*pxPerMm, margin=20*dpr;
+    ctx.fillStyle='#fff';ctx.fillRect(margin,h-barH-margin,barW,barH);
+    ctx.font=`${12*dpr}px sans-serif`; ctx.textBaseline='bottom';
+    ctx.fillText('50 mm',margin,h-barH-margin-4*dpr);
+}
+
+// =========================
+// MASTER RENDER & UI
+// =========================
+function drawVisualization() {
+    const p={
+        sph:parseFloat(ui.sphere.value)||0, cyl:parseFloat(ui.cylinder.value)||0, axis:parseInt(ui.axis.value)||0,
+        material:materials[parseInt(ui.materialSlider.value)], 
+        prog:ui.progressiveToggle.checked, 
+        side:document.querySelector('input[name="lensSide"]:checked').value,
+        add: (ui.progressiveToggle.checked && ui.addPower) ? parseFloat(ui.addPower.value) : 0
+    };
+    
+    const metrics=calculateSVMetrics(p);
+    ui.clarityDiameterValue.textContent=`${Math.min(metrics.cds,metrics.cdt).toFixed(1)} mm`;
+    ui.distortionValue.textContent=`${metrics.dS.toFixed(0)} %`;
+    
+    createWarpBackground(offscreenCtx,canvas.width,canvas.height,p,metrics);
+    drawRayMappedView(p,metrics);
+    drawClinicalOverlay(p,metrics);
+}
+function updateAndRedraw(){
+    ui.sphereValue.textContent = parseFloat(ui.sphere.value).toFixed(2);
+    ui.cylinderValue.textContent = parseFloat(ui.cylinder.value).toFixed(2);
+    ui.axisValue.textContent = ui.axis.value;
+    ui.materialName.textContent = materials[parseInt(ui.materialSlider.value)].name;
+    if(ui.progressiveToggle.checked && ui.addPowerValue) {
+        ui.addPowerValue.textContent = `+${parseFloat(ui.addPower.value).toFixed(2)}`;
+    }
+    drawVisualization();
+}
+function adjustSlider(s,v){
+    if (!s) return;
+    s.value=clamp(parseFloat(s.value)+v,parseFloat(s.min),parseFloat(s.max));
+    updateAndRedraw();
+}
+
+controlsHeader.addEventListener('click', () => {
+    const isCollapsed = controlsContainer.classList.toggle('is-collapsed');
+    controlsHeader.textContent = isCollapsed ? 'Show Controls' : 'Hide Controls';
+});
+
+ui.progressiveToggle.addEventListener('input', () => {
+    ui.progressiveControls.style.display = ui.progressiveToggle.checked ? 'block' : 'none';
+    updateAndRedraw();
+});
+
+controls.forEach(el=> {
+    if (el.id !== 'progressiveToggle') {
+        el.addEventListener('input',updateAndRedraw);
+    }
+});
+ui['sph-minus'].addEventListener('click',()=>adjustSlider(ui.sphere,-0.25)); ui['sph-plus'].addEventListener('click',()=>adjustSlider(ui.sphere,0.25));
+ui['cyl-minus'].addEventListener('click',()=>adjustSlider(ui.cylinder,-0.25)); ui['cyl-plus'].addEventListener('click',()=>adjustSlider(ui.cylinder,0.25));
+ui.applyCalBtn.addEventListener('click',()=>{
+    const m=parseFloat(ui.measuredMm.value); if(!isFinite(m)||m<=0)return;
+    calibrationScale=50/m; ui.scaleValue.textContent=calibrationScale.toFixed(2)+'×'; drawVisualization();
+});
+
+// =========================
+// INIT
+// =========================
+window.addEventListener('load',()=>{setTimeout(()=>{
+    calculateBaseScale(); 
+    setupCanvas(); 
+    ui.progressiveControls.style.display = ui.progressiveToggle.checked ? 'block' : 'none';
+    if (window.innerWidth <= 900) {
+        controlsContainer.classList.add('is-collapsed');
+        controlsHeader.textContent = 'Show Controls';
+    } else {
+        controlsContainer.classList.remove('is-collapsed');
+    }
+    updateAndRedraw();
+},50);});
+window.addEventListener('resize',()=>{clearTimeout(resizeTimeout);resizeTimeout=setTimeout(()=>{
+    setupCanvas();
+    if (window.innerWidth <= 900) {
+        if (!controlsContainer.classList.contains('is-collapsed')) {
+             controlsHeader.textContent = 'Hide Controls';
+        } else {
+             controlsHeader.textContent = 'Show Controls';
+        }
+    }
+    drawVisualization();
+},100);});
+let resizeTimeout;
+
+</script>
+</body>
+</html>
             place-items: center;
             min-height: 100vh;
             margin: 0;
