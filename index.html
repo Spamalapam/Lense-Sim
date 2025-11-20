@@ -1,10 +1,11 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Optical Visualizer v45.0 (Accurate Thickness)</title>
+    <title>Optical Visualizer v52.0 (Heavy Distortion)</title>
     <style>
         :root {
             --bg-color: #1e1e24; --surface-color: #2a2a30; --text-color: #e0e0e0;
@@ -12,7 +13,6 @@
             --zone-blue:   rgba(0, 191, 255, 0.35); --zone-green:  rgba(57, 255, 20, 0.28);
             --zone-yellow: rgba(255, 255, 0, 0.22); --zone-orange: rgba(255, 165, 0, 0.20);
             --zone-red:    rgba(255, 0, 0, 0.18);
-            --progressive-bg: rgb(40,40,45); --grid-color: rgba(255,255,255,0.15);
         }
         html, body { background-color: var(--bg-color); overscroll-behavior: none; height: 100%; margin: 0; }
         body {
@@ -101,21 +101,21 @@
         <div class="controls is-collapsed">
             <div class="controls-header">Show Controls</div>
             <div class="controls-body">
-                <div class="input-group"><label>Spherical Power (SPH)</label><div class="slider-group"><div class="precision-btn" id="sph-minus">-</div><input type="range" id="sphere" min="-15" max="10" value="-6.00" step="0.25"><div class="precision-btn" id="sph-plus">+</div><span id="sphereValue">-6.00</span></div></div>
-                <div class="input-group"><label>Cylindrical Power (CYL)</label><div class="slider-group"><div class="precision-btn" id="cyl-minus">-</div><input type="range" id="cylinder" min="-6" max="6" value="0.00" step="0.25"><div class="precision-btn" id="cyl-plus">+</div><span id="cylinderValue">0.00</span></div></div>
-                <div class="input-group"><label>Axis</label><div class="slider-group"><input type="range" id="axis" min="0" max="180" value="180" step="1"><span id="axisValue">180</span></div></div>
+                <div class="input-group"><label>Spherical Power (SPH)</label><div class="slider-group"><div class="precision-btn" id="sph-minus">-</div><input type="range" id="sphere" min="-15" max="10" value="-10.00" step="0.25"><div class="precision-btn" id="sph-plus">+</div><span id="sphereValue">-10.00</span></div></div>
+                <div class="input-group"><label>Cylindrical Power (CYL)</label><div class="slider-group"><div class="precision-btn" id="cyl-minus">-</div><input type="range" id="cylinder" min="-6" max="6" value="4.50" step="0.25"><div class="precision-btn" id="cyl-plus">+</div><span id="cylinderValue">4.50</span></div></div>
+                <div class="input-group"><label>Axis</label><div class="slider-group"><input type="range" id="axis" min="0" max="180" value="105" step="1"><span id="axisValue">105</span></div></div>
                 <div class="input-group"><label>Lens Material</label><div class="slider-group"><input type="range" id="materialSlider" min="0" max="4" value="3"><span id="materialName">1.67 HI</span></div></div>
-                <div class="input-group"><label>Edge Decentration (D_mm)</label><div class="slider-group"><input type="range" id="decentration" min="25" max="40" value="32" step="0.5"><span id="decentrationValue">32.0 mm</span></div></div>
+                <div class="input-group"><label>Edge Decentration (D_mm)</label><div class="slider-group"><input type="range" id="decentration" min="25" max="40" value="32.0" step="0.5"><span id="decentrationValue">32.0 mm</span></div></div>
 
                 <div class="input-group">
-                    <label>Progressive Corridor</label>
+                    <label>Lens Configuration</label>
+                    <div class="lens-side-row" style="margin-bottom: 0.8em;"><label>Lens side (Ocular View):</label><label><input type="radio" name="lensSide" id="lensRight" value="R" checked><span>Right</span></label><label><input type="radio" name="lensSide" id="lensLeft" value="L"><span>Left</span></label></div>
                     <div class="toggle-row"><label><input type="checkbox" id="progressiveToggle" /><span>Enable Progressive Simulation</span></label></div>
                     <div id="progressiveControls">
                         <div class="input-group" style="margin-top: 1.5em;"><label>ADD Power</label><div class="slider-group"><input type="range" id="addPower" min="0.75" max="3.50" value="2.00" step="0.25"><span id="addPowerValue">+2.00</span></div></div>
-                        <div class="lens-side-row" style="margin-top: -1em;"><label>Lens side:</label><label><input type="radio" name="lensSide" id="lensRight" value="R" checked><span>Right</span></label><label><input type="radio" name="lensSide" id="lensLeft" value="L"><span>Left</span></label></div>
                     </div>
                 </div>
-                <div class="input-group"><label>Screen Calibration</label><div class="cal-row"><span style="font-size:0.8em; color:#aaa;">Bar says 50 mm, I measured</span><input type="number" id="measuredMm" value="36" min="10" max="100" step="0.1"><span style="font-size:0.8em; color:#aaa;">mm</span><button id="applyCalBtn">Apply</button></div><div class="calibration-hint">Measure the white bar with a real ruler. After Apply, visuals are in true mm.</div><div class="scale-readout">Scale: <span id="scaleValue">1.00×</span></div></div>
+                <div class="input-group"><label>Screen Calibration</label><div class="cal-row"><span style="font-size:0.8em; color:#aaa;">Bar says 50 mm, I measured</span><input type="number" id="measuredMm" value="36" min="10" max="100" step="0.1"><span style="font-size:0.8em; color:#aaa;">mm</span><button id="applyCalBtn">Apply</button></div><div class="calibration-hint">Measure the white bar height with a ruler. It represents physical thickness.</div><div class="scale-readout">Scale: <span id="scaleValue">1.00×</span></div></div>
             </div>
         </div>
         <div class="visualization-area">
@@ -149,29 +149,22 @@ const controlsContainer = document.querySelector('.controls');
 const controlsHeader = document.querySelector('.controls-header');
 
 let dpr = 1, basePxPerMmPhysical = 4, calibrationScale = 1.0;
-// ✨ NEW: Updated Material Data Structure
+
 const MATERIALS = {
-  "1.50": { name: "CR-39 (1.50)",         n: 1.50, centerThickness: 2.2, factor: 0.8 },
-  "1.59": { name: "Polycarbonate (1.59)", n: 1.59, centerThickness: 2.0, factor: 1.0 },
-  "1.60": { name: "High Index (1.60)",    n: 1.60, centerThickness: 1.9, factor: 1.8 },
-  "1.67": { name: "High Index (1.67)",    n: 1.67, centerThickness: 1.7, factor: 2.2 },
-  "1.74": { name: "High Index (1.74)",    n: 1.74, centerThickness: 1.5, factor: 4.5 }
+  "1.50": { name: "CR-39 (1.50)",         n: 1.50, centerThickness: 2.2, correction: 1.2, factor: 0.8 },
+  "1.59": { name: "Polycarbonate (1.59)", n: 1.59, centerThickness: 2.0, correction: 1.5, factor: 1.0 }, 
+  "1.60": { name: "High Index (1.60)",    n: 1.60, centerThickness: 1.9, correction: 0.6, factor: 1.8 }, 
+  "1.67": { name: "High Index (1.67)",    n: 1.67, centerThickness: 1.7, correction: 0.8, factor: 2.2 }, 
+  "1.74": { name: "High Index (1.74)",    n: 1.74, centerThickness: 1.5, correction: 0.55, factor: 4.5 } 
 };
-const MATERIAL_KEYS = Object.keys(MATERIALS); // For slider access
+const MATERIAL_KEYS = Object.keys(MATERIALS);
 
 // =========================
-// UTILITIES & CALIBRATION
+// UTILITIES
 // =========================
 function lerp(a,b,t){return a+(b-a)*t;}
 function clamp(v,min,max){return Math.max(min, Math.min(max,v));}
-function heatColor(t){
-    t = clamp(t,0,1); let r,g,b;
-    if(t<0.25){ r=lerp(0,57,t/0.25); g=lerp(191,255,t/0.25); b=lerp(255,20,t/0.25); }
-    else if(t<0.5){ r=lerp(57,255,(t-0.25)/0.25); g=255; b=lerp(20,0,(t-0.25)/0.25); }
-    else if(t<0.75){ r=255; g=lerp(255,165,(t-0.5)/0.25); b=0; }
-    else{ r=255; g=lerp(165,0,(t-0.75)/0.25); b=0; }
-    return `rgba(${r.toFixed(0)},${g.toFixed(0)},${b.toFixed(0)},0.9)`;
-}
+function getAnisotropy(cyl){ return Math.min(1 + 0.15 * Math.abs(cyl), 1.7); }
 function calculateBaseScale() {
     const probe = document.createElement('div');
     probe.style.cssText='position:absolute;top:-9999px;width:1mm;height:1mm;';
@@ -189,16 +182,16 @@ function setupCanvas() {
 }
 
 // =========================
-// OPTICAL MODELS
+// OPTICAL MATH
 // =========================
-// ✨ NEW: The accurate edge thickness formula
 function calculateEdgeThickness(p) {
     const D_mm = p.decentration;
     const Peff_mag = Math.abs(p.sph + (p.cyl / 2));
     const refractiveFactor = 2000 * (p.material.n - 1);
     const centerT = p.material.centerThickness;
-    const thicknessContribution = (D_mm * D_mm * Peff_mag) / refractiveFactor;
-    return centerT + thicknessContribution;
+    const sagitta = (D_mm * D_mm * Peff_mag) / refractiveFactor;
+    const correction = (p.material.correction || 0) * (Peff_mag / 9); 
+    return centerT + sagitta + correction;
 }
 
 function calculateSVMetrics(p) {
@@ -209,10 +202,9 @@ function calculateSVMetrics(p) {
     const cdt=Math.max(8,maxClear-ppt*(3.0/dR));
     const rawD=Math.pow(baseP,1.5)+Math.pow(totalP,1.6);
     
-    // ✨ REACTIVITY FIX: Distortion is now driven by edge thickness
     const edgeT = calculateEdgeThickness(p);
     const centerT = p.material.centerThickness;
-    const thicknessFactor = (edgeT / centerT) / 2; // Normalize a bit
+    const thicknessFactor = (edgeT / centerT) / 2; 
     const modifiedRawD = rawD * thicknessFactor;
     const dS = Math.min(100, modifiedRawD / dR);
 
@@ -223,61 +215,94 @@ function distortionScoreAt(dx, dy, w, h, p, metrics) {
     const r=Math.sqrt(dx*dx+dy*dy), maxR=Math.sqrt(w*w+h*h)/2, rNorm=r/maxR;
     const theta=Math.atan2(dy,dx), axisRad=(p.axis*Math.PI)/180;
     const radial=Math.abs(metrics.warp)*Math.pow(rNorm,1.5);
-    const twist=Math.abs(metrics.twist)*Math.pow(rNorm,2)*Math.abs(Math.sin(2*(theta-axisRad)));
+    const nasalBias = (p.side === 'R' && dx > 0) || (p.side === 'L' && dx < 0) ? 1.2 : 0.9;
+    const twist=Math.abs(metrics.twist)*nasalBias*Math.pow(rNorm,2)*Math.abs(Math.sin(2*(theta-axisRad)));
     return radial+twist;
 }
 
 // =========================
-// DRAWING FUNCTIONS
+// HEATMAPS & RENDERING
 // =========================
 function createWarpBackground(offCtx, w, h, p, metrics) {
-    offCtx.clearRect(0, 0, w, h);
+    offCtx.clearRect(0, 0, w, h); // Ghosting fix
     if (p.prog) {
         drawProgressiveHeatMap(offCtx, w, h, p, metrics);
     } else {
-        drawSVHeatmap(offCtx, w, h, p, metrics);
+        drawAdvancedSVHeatmap(offCtx, w, h, p, metrics);
     }
 }
 
-function drawSVHeatmap(ctx2, w, h, p, metrics){
+function heatColor(t){
+    t = clamp(t,0,1); let r,g,b;
+    if(t<0.25){ r=lerp(0,57,t/0.25); g=lerp(191,255,t/0.25); b=lerp(255,20,t/0.25); }
+    else if(t<0.5){ r=lerp(57,255,(t-0.25)/0.25); g=255; b=lerp(20,0,(t-0.25)/0.25); }
+    else if(t<0.75){ r=255; g=lerp(255,165,(t-0.5)/0.25); b=0; }
+    else{ r=255; g=lerp(165,0,(t-0.75)/0.25); b=0; }
+    return `rgba(${r.toFixed(0)},${g.toFixed(0)},${b.toFixed(0)},1.0)`; // Increased opacity to 1.0 for vibrant look
+}
+
+function drawAdvancedSVHeatmap(ctx2, w, h, p, metrics){
     const cx=w/2, cy=h/2, pxPerMm=getPxPerMm();
-    const comfortRpx=Math.min(metrics.cds,metrics.cdt)/2*pxPerMm;
-    const funcRpx=comfortRpx*1.7;
-    const maxRpx=Math.sqrt(w*w+h*h)/2;
-    const orangeRpx=funcRpx+(maxRpx-funcRpx)*0.6;
-    const axisRad=(p.axis*Math.PI)/180, aniso=Math.min(1 + 0.15 * Math.abs(p.cyl), 1.7);
-    function fill(r,c){ ctx2.fillStyle=c; ctx2.beginPath(); ctx2.ellipse(cx,cy,r*aniso,r/aniso,axisRad,0,2*Math.PI); ctx2.fill(); }
-    fill(maxRpx,'rgba(255,0,0,0.18)'); fill(orangeRpx,'rgba(255,165,0,0.20)');
-    fill(funcRpx,'rgba(255,255,0,0.22)'); fill(comfortRpx,'rgba(57,255,20,0.28)');
-    fill(comfortRpx*0.5,'rgba(0,191,255,0.35)');
-    drawGrid(ctx2, w, h, 5*pxPerMm, 'rgba(0,0,0,0.4)');
+    const maxRpx = Math.sqrt(w*w+h*h)/2;
+    const clearRpx = Math.min(metrics.cds, metrics.cdt)/2 * pxPerMm;
+    const axisRad = (p.axis*Math.PI)/180;
+    const aniso = getAnisotropy(p.cyl);
+
+    ctx2.save();
+    ctx2.translate(cx, cy);
+    ctx2.rotate(axisRad);
+    ctx2.scale(aniso, 1/aniso);
+
+    const grad = ctx2.createRadialGradient(0, 0, clearRpx * 0.2, 0, 0, maxRpx);
+    // Vibrant, opaque colors
+    grad.addColorStop(0, 'rgba(0, 191, 255, 1)');     // Blue
+    grad.addColorStop(clearRpx/maxRpx, 'rgba(57, 255, 20, 1)'); // Green
+    grad.addColorStop((clearRpx*1.5)/maxRpx, 'rgba(255, 255, 0, 1)'); // Yellow
+    grad.addColorStop(1, 'rgba(255, 0, 0, 1)');       // Red
+
+    ctx2.fillStyle = grad;
+    ctx2.fillRect(-maxRpx*2, -maxRpx*2, maxRpx*4, maxRpx*4);
+    ctx2.restore();
 }
 
 function drawProgressiveHeatMap(ctx2, w, h, p, metrics){
     const pxPerMm=getPxPerMm(), cx=w/2, cy=h/2;
     const mapRadiusMm=30, mapRadiusPx=mapRadiusMm*pxPerMm, mapRadiusSq=mapRadiusPx*mapRadiusPx;
+    
     const dropMm=11, insetMm=3, nasalSign=(p.side==='R'?-1:1);
     const dropPx=dropMm*pxPerMm, insetPx=insetMm*pxPerMm;
     const dStrength=clamp(metrics.dS/100,0,1);
     const baseWidthTop=lerp(12, 5, dStrength), baseWidthBot=lerp(7, 4, dStrength);
+    
     function centerX(y){ const t=clamp((y-cy)/dropPx,0,1); return cx+nasalSign*insetPx*(t*(1-0.3*t)-0.15*Math.pow(t,3)); }
     function halfWidth(y){ const t=clamp((y-cy)/dropPx,0,1); return (lerp(baseWidthTop,baseWidthBot,t)*(1-0.6*Math.sin(Math.PI*t)))*pxPerMm; }
 
-    ctx2.fillStyle='rgb(40,40,45)'; ctx2.fillRect(0,0,w,h);
+    // Fill background with "blur" red to emulate full map
+    ctx2.fillStyle='rgba(255,0,0,1)'; 
+    ctx2.fillRect(0,0,w,h);
+    
     const imgData=ctx2.getImageData(0,0,w,h), data=imgData.data;
+    
     for(let y=0;y<h;y++){
         for(let x=0;x<w;x++){
             const dx=x-cx, dy=y-cy;
-            if(dx*dx+dy*dy>mapRadiusSq) continue;
+            // Optimization: Only calculate corridor area in JS, leave rest Red
+            
             const cX=centerX(y), hW=halfWidth(y)||1;
             const distFromCorr=Math.abs(x-cX)/hW;
+            
             let vPenalty=0;
             if(y<cy-6*pxPerMm) vPenalty=((cy-6*pxPerMm)-y)/(6*pxPerMm);
             if(y>cy+dropPx+4*pxPerMm) vPenalty=(y-(cy+dropPx+4*pxPerMm))/(6*pxPerMm);
+            
             const astigPenalty=clamp(distortionScoreAt(dx,dy,w,h,p,metrics)*3.0,0,5);
-            const nasalBoost=clamp((x-cx)*nasalSign>0?(x-cx)*nasalSign/(10*pxPerMm):0,0,1.2)*clamp((y-cy)/dropPx,0,1);
+            const isNasal = (x-cx)*nasalSign > 0;
+            const nasalBoost=clamp(isNasal ? Math.abs(x-cx)/(10*pxPerMm) : 0, 0, 1.2)*clamp((y-cy)/dropPx,0,1);
+            
             let clarityScore = distFromCorr*(1.2+dStrength*2.0)+astigPenalty*(0.8+nasalBoost)+clamp(vPenalty,0,2)*0.7;
             clarityScore*=(0.6+0.4*clamp((y-cy)/dropPx,0,1));
+            
+            // Use full opacity
             const col=heatColor(clamp(clarityScore/3.5,0,1));
             const parts=col.match(/rgba\((\d+),(\d+),(\d+),([\d.]+)\)/);
             const idx=(y*w+x)*4;
@@ -285,79 +310,140 @@ function drawProgressiveHeatMap(ctx2, w, h, p, metrics){
         }
     }
     ctx2.putImageData(imgData,0,0);
-    drawGrid(ctx2, w, h, 10*pxPerMm, 'rgba(255,255,255,0.15)');
 }
 
-function drawGrid(ctx2, w, h, step, color) {
-    ctx2.strokeStyle=color; ctx2.lineWidth=1*dpr;
-    for(let i=w/2;i<=w;i+=step){ ctx2.beginPath();ctx2.moveTo(i,0);ctx2.lineTo(i,h);ctx2.stroke(); }
-    for(let i=w/2-step;i>=0;i-=step){ ctx2.beginPath();ctx2.moveTo(i,0);ctx2.lineTo(i,h);ctx2.stroke(); }
-    for(let i=h/2;i<=h;i+=step){ ctx2.beginPath();ctx2.moveTo(0,i);ctx2.lineTo(w,i);ctx2.stroke(); }
-    for(let i=h/2-step;i>=0;i-=step){ ctx2.beginPath();ctx2.moveTo(0,i);ctx2.lineTo(w,i);ctx2.stroke(); }
+// STRONG DISTORTION GRID with Dark Lines
+function drawDistortedGrid(ctx2, w, h, p, metrics) {
+    const pxPerMm = getPxPerMm();
+    const step = 4.0 * pxPerMm; 
+    const cx = w/2, cy = h/2;
+    const axisRad = (p.axis*Math.PI)/180;
+
+    // Change grid to Dark/Black for high contrast against vibrant heatmap
+    ctx2.strokeStyle = 'rgba(0, 0, 0, 0.5)'; 
+    ctx2.lineWidth = 1.2 * dpr;
+    ctx2.beginPath();
+
+    const getDistortedPoint = (ox, oy) => {
+        let dx = ox - cx;
+        let dy = oy - cy;
+        const r = Math.sqrt(dx*dx + dy*dy);
+        const rNorm = r / (w/2);
+        const theta = Math.atan2(dy, dx);
+
+        let powerAtPoint = p.sph;
+        // Add Power Logic for Progressive Grid
+        if(p.prog && dy > 0) {
+            const progression = clamp(dy/(12*pxPerMm), 0, 1);
+            powerAtPoint += p.add * progression;
+        }
+        
+        // INCREASED DISTORTION CONSTANT
+        // Old k was 0.035. New k = 0.05 for stronger "Refraction" effect.
+        const k = 0.05; 
+        
+        // Lower index = "curvier" = more distortion variation
+        const indexFactor = (1.6 / p.material.n); 
+        
+        const magEffect = powerAtPoint * k * indexFactor; 
+        // Cap effect to avoid mathematical explosion
+        const safeMagEffect = Math.min(magEffect, 0.75); 
+        const magFactor = 1 / (1 - safeMagEffect); 
+        
+        // Boost Astigmatic Warp
+        const warp = metrics.warp * 3.0; 
+        const twist = metrics.twist * 3.0;
+        
+        const radialShift = magFactor * (1 + warp * 0.2 * Math.pow(rNorm, 2));
+        const twistAngle = twist * 0.2 * Math.pow(rNorm, 2) * Math.sin(2*(theta - axisRad));
+
+        const finalR = r * radialShift;
+        const finalTheta = theta - twistAngle;
+
+        return {
+            x: cx + finalR * Math.cos(finalTheta),
+            y: cy + finalR * Math.sin(finalTheta)
+        };
+    };
+
+    // Vertical Lines
+    for (let x = 0; x <= w; x += step) {
+        for (let y = 0; y < h; y += 10) { 
+            const pt = getDistortedPoint(x, y);
+            if (y===0) ctx2.moveTo(pt.x, pt.y);
+            else ctx2.lineTo(pt.x, pt.y);
+        }
+    }
+    // Horizontal Lines
+    for (let y = 0; y <= h; y += step) {
+        for (let x = 0; x < w; x += 10) {
+            const pt = getDistortedPoint(x, y);
+            if (x===0) ctx2.moveTo(pt.x, pt.y);
+            else ctx2.lineTo(pt.x, pt.y);
+        }
+    }
+    ctx2.stroke();
 }
 
 function drawRayMappedView(p, metrics) {
+    // Ghosting Fix: Clear main canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
     const w=offscreenCanvas.width, h=offscreenCanvas.height;
-    const cx=w/2, cy=h/2;
-    const axisRad=(p.axis*Math.PI)/180;
-    const srcData=offscreenCtx.getImageData(0,0,w,h);
-    const destData=ctx.createImageData(w,h);
-    const pxPerMm=getPxPerMm();
-
-    for(let y=0;y<h;y++){
-        for(let x=0;x<w;x++){
-            const dx=x-cx, dy=y-cy;
-            let warp=metrics.warp, twist=metrics.twist;
-            const r=Math.sqrt(dx*dx+dy*dy);
-            if (r === 0) continue;
-            if(p.prog){
-                let localAdd = 0;
-                const addPower = p.add || 0;
-                if(dy > 0) localAdd = clamp(dy/(11*pxPerMm), 0, 1) * addPower;
-                const progWarpMultiplier = 1.3, progTwistMultiplier = 1.5;
-                warp = -(p.sph+localAdd)*0.02*(1+metrics.dS*0.01) * progWarpMultiplier;
-                twist = metrics.twist * progTwistMultiplier;
-            }
-            const rNorm=r/(w/2); let theta=Math.atan2(dy,dx);
-            const radialShift=1+warp*Math.pow(rNorm,1.5);
-            const twistAngle=twist*Math.pow(rNorm,2)*Math.sin(2*(theta-axisRad));
-            theta-=twistAngle;
-            const srcR=r/radialShift;
-            const sx=cx+srcR*Math.cos(theta), sy=cy+srcR*Math.sin(theta);
-            if(sx>=0&&sx<w&&sy>=0&&sy<h){
-                const srcIdx=(Math.floor(sy)*w+Math.floor(sx))*4;
-                const destIdx=(y*w+x)*4;
-                destData.data[destIdx]=srcData.data[srcIdx]; destData.data[destIdx+1]=srcData.data[srcIdx+1];
-                destData.data[destIdx+2]=srcData.data[srcIdx+2]; destData.data[destIdx+3]=255;
-            }
-        }
-    }
-    ctx.putImageData(destData,0,0);
+    // Draw Heatmap
+    ctx.drawImage(offscreenCanvas, 0, 0);
+    // Draw Strong Grid Over it
+    drawDistortedGrid(ctx, w, h, p, metrics);
 }
 
 function drawClinicalOverlay(p, metrics) {
     const w=canvas.logicalWidth, h=canvas.logicalHeight, pxPerMm=getPxPerMm();
+    const cx=w/2, cy=h/2;
+    
     if(!p.prog){
-        const cx=w/2, cy=h/2, axisRad=(p.axis*Math.PI)/180;
         const comfortR=Math.min(metrics.cds,metrics.cdt)/2*pxPerMm;
+        const axisRad=(p.axis*Math.PI)/180;
         const aniso=getAnisotropy(p.cyl);
-        ctx.lineWidth=4; ctx.strokeStyle='rgba(57,255,20,0.9)'; ctx.beginPath();
-        ctx.ellipse(cx,cy,comfortR*aniso,comfortR/aniso,axisRad,0,2*Math.PI); ctx.stroke();
+        
+        // White Overlay for visibility on vibrant map
+        ctx.lineWidth=3; ctx.strokeStyle='rgba(255,255,255,0.8)'; ctx.setLineDash([]);
+        ctx.beginPath(); ctx.ellipse(cx,cy,comfortR*aniso,comfortR/aniso,axisRad,0,2*Math.PI); ctx.stroke();
+        
+        ctx.strokeStyle='rgba(255,255,255,0.4)'; ctx.setLineDash([2, 4]);
+        ctx.beginPath(); ctx.moveTo(cx + Math.cos(axisRad)*w, cy + Math.sin(axisRad)*w);
+        ctx.lineTo(cx - Math.cos(axisRad)*w, cy - Math.sin(axisRad)*w); ctx.stroke();
     } else {
-        const cx=w/2, cy=h/2;
-        const dropMm=11, insetMm=3, nasalSign=(p.side==='R'?-1:1);
+        const dropMm=11, insetMm=3;
+        const nasalSign=(p.side==='R'?-1:1);
         const nearCx=cx+insetMm*nasalSign*pxPerMm, nearCy=cy+dropMm*pxPerMm;
-        ctx.lineWidth=3; ctx.strokeStyle='rgba(255,255,0,0.9)';
+        
+        ctx.lineWidth=3; ctx.strokeStyle='rgba(255,255,255,0.8)'; ctx.setLineDash([]);
         ctx.beginPath();ctx.ellipse(cx,cy,4*pxPerMm,4*pxPerMm,0,0,2*Math.PI);ctx.stroke();
         ctx.beginPath();ctx.ellipse(nearCx,nearCy,4.5*pxPerMm,4.5*pxPerMm,0,0,2*Math.PI);ctx.stroke();
     }
-    drawCalibrationBar(pxPerMm,w,h);
+    drawCalibrationBar(pxPerMm,w,h, metrics.edgeT);
 }
-function drawCalibrationBar(pxPerMm,w,h){
-    const barW=50*pxPerMm, barH=5*pxPerMm, margin=20*dpr;
-    ctx.fillStyle='#fff';ctx.fillRect(margin,h-barH-margin,barW,barH);
-    ctx.font=`${12*dpr}px sans-serif`; ctx.textBaseline='bottom';
-    ctx.fillText('50 mm',margin,h-barH-margin-4*dpr);
+
+function drawCalibrationBar(pxPerMm,w,h, thicknessMm){
+    const barW=50*pxPerMm;
+    const barH = thicknessMm * pxPerMm; 
+    const margin=20*dpr;
+    
+    // Dark outline for contrast
+    ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1;
+    ctx.strokeRect(margin, h-barH-margin, barW, barH);
+    ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.fillRect(margin, h-barH-margin, barW, barH);
+    
+    ctx.fillStyle='#fff'; ctx.font=`${12*dpr}px sans-serif`; 
+    ctx.textBaseline='bottom'; ctx.textAlign='left';
+    ctx.fillText('50 mm Scale', margin, h-barH-margin-4*dpr);
+    
+    ctx.textAlign='right';
+    ctx.fillText(`Max Edge: ${thicknessMm.toFixed(1)}mm`, margin+barW, h-barH-margin-4*dpr);
+    
+    ctx.beginPath(); ctx.strokeStyle = '#00bcd4'; ctx.lineWidth = 2;
+    ctx.moveTo(margin + barW + 5, h - margin); ctx.lineTo(margin + barW + 5, h - margin - barH);
+    ctx.stroke();
 }
 
 // =========================
@@ -411,8 +497,12 @@ ui.progressiveToggle.addEventListener('input', () => {
     updateAndRedraw();
 });
 
+document.querySelectorAll('input[name="lensSide"]').forEach(r => {
+    r.addEventListener('input', updateAndRedraw);
+});
+
 controls.forEach(el=> {
-    if (el.id !== 'progressiveToggle') {
+    if (el.id !== 'progressiveToggle' && el.name !== 'lensSide') {
         el.addEventListener('input',updateAndRedraw);
     }
 });
