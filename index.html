@@ -2,9 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Optical Visualizer v54.0 (Lab Calibrated)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lens RX Simulator v54.4</title>
     <style>
         :root {
             --bg-color: #1e1e24; --surface-color: #2a2a30; --text-color: #e0e0e0;
@@ -30,7 +29,6 @@
             border: 1px solid var(--border-color); flex-shrink: 0;
         }
         .input-group { margin-bottom: 1.5em; }
-        .input-group:last-child { margin-bottom: 0; }
         .input-group label {
             display: block; margin-bottom: 0.6em; font-weight: 500; font-size: 0.9em;
             color: #aaa; text-transform: uppercase; letter-spacing: 0.5px;
@@ -53,11 +51,12 @@
         .cal-row { display: flex; align-items: center; gap: 0.5em; }
         .cal-row input[type="number"] { width: 4em; background: #1a1a1f; color: #fff; border: 1px solid #555; border-radius: 6px; padding: 0.4em 0.5em; font-size: 0.9em; text-align: right; }
         .cal-row button { background: var(--primary-color); color: #000; border: 0; border-radius: 6px; font-size: 0.8em; font-weight: 600; padding: 0.4em 0.6em; cursor: pointer; }
-        .calibration-hint, .metric-small { color: #777; font-size: 0.7em; line-height: 1.3em; margin-top: 0.4em; }
+        .calibration-hint { color: #777; font-size: 0.7em; line-height: 1.3em; margin-top: 0.4em; }
         .scale-readout { color: #aaa; font-size: 0.8em; margin-top: 0.4em; font-family: monospace; }
         .toggle-row, .lens-side-row { display: flex; align-items: center; gap: 1em; font-size: 0.9em; color: #ddd; }
-        .toggle-row input[type="checkbox"], .lens-side-row input[type="radio"] { accent-color: var(--primary-color); margin-right: -0.5em; }
+        .toggle-row input[type="checkbox"], .lens-side-row input[type="radio"] { accent-color: var(--primary-color); }
         #progressiveControls { display: none; border-top: 1px solid var(--border-color); margin-top: 1.5em; padding-top: 1.5em;}
+        
         .visualization-area { display: flex; flex-direction: column; align-items: center; gap: 1.5em; flex-grow: 1; width: 100%; }
         .canvas-wrapper {
             position: relative; width: 100%; max-width: 80vh;
@@ -67,7 +66,6 @@
         }
         #lensCanvas { width: 100%; height: 100%; display: block; }
         
-        /* Metrics Box & Popups */
         .metrics-box {
             background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 12px;
             padding: 1.5em; width: 100%; max-width: 80vh; box-sizing: border-box;
@@ -75,51 +73,48 @@
         }
         .metric { text-align: center; position: relative; cursor: pointer; transition: opacity 0.2s; }
         .metric:hover { opacity: 0.8; }
-        .metric-label { font-size: 0.8em; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5em; display: flex; align-items: center; justify-content: center; gap: 5px;}
-        .metric-value { font-size: 1.4em; font-weight: bold; color: var(--metric-value-color); line-height: 1.2em; }
+        .metric-label { font-size: 0.8em; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.4em; display: flex; align-items: center; justify-content: center; gap: 5px;}
+        .metric-value { font-size: 1.25em; font-weight: bold; color: var(--metric-value-color); line-height: 1.2em; }
+        .metric-sub { font-size: 0.7em; color: #777; margin-top: 0.2em; }
         .info-icon { font-size: 0.8em; color: var(--primary-color); border: 1px solid var(--primary-color); border-radius: 50%; width: 14px; height: 14px; line-height: 12px; text-align: center; display: inline-block; }
 
-        /* Distortion Popup Styling */
-        .distortion-popup {
-            display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
-            width: 280px; background: rgba(30, 30, 36, 0.95); border: 1px solid var(--primary-color);
-            border-radius: 8px; padding: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            z-index: 100; margin-bottom: 15px; backdrop-filter: blur(5px);
-            text-align: left; pointer-events: none; /* Initially none */
+        .risk-popup {
+            display: none; position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%);
+            width: 320px; background: rgba(30, 30, 36, 0.98); border: 1px solid var(--primary-color);
+            border-radius: 8px; padding: 18px; box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            z-index: 100; backdrop-filter: blur(10px); text-align: left;
         }
-        .distortion-popup.active { display: block; pointer-events: auto; }
-        .distortion-popup h4 { margin: 0 0 10px 0; color: var(--primary-color); font-size: 1em; font-weight: 600; border-bottom: 1px solid #444; padding-bottom: 5px; }
-        .distortion-popup p { font-size: 0.85em; color: #ddd; margin: 0 0 8px 0; line-height: 1.4; }
-        .distortion-popup ul { list-style: none; padding: 0; margin: 0; }
-        .distortion-popup li { font-size: 0.8em; color: #bbb; margin-bottom: 5px; display: flex; justify-content: space-between; }
-        .distortion-popup li span:last-child { font-weight: bold; color: #fff; }
+        .risk-popup.active { display: block; }
+        .risk-popup h4 { margin: 0 0 10px 0; color: var(--primary-color); font-size: 1em; border-bottom: 1px solid #444; padding-bottom: 5px; }
+        
+        .risk-scale { font-size: 0.75em; margin: 10px 0; display: flex; flex-direction: column; gap: 2px; }
+        .band-item { display: flex; justify-content: space-between; padding: 2px 6px; border-radius: 3px; color: #888; }
+        .band-item.active { background: var(--primary-color); color: #000; font-weight: bold; }
+        .band-item.best { border: 1px dashed var(--primary-color); color: var(--primary-color); }
+        
+        .driver-list { margin-top: 12px; }
+        .driver-list h5 { font-size: 0.75em; text-transform: uppercase; color: #aaa; margin: 0 0 5px 0; }
+        .driver-tag { display: inline-block; font-size: 0.65em; background: #444; padding: 2px 6px; border-radius: 10px; margin: 0 4px 4px 0; color: #eee; }
+        
+        .best-comparison { margin-top: 10px; padding-top: 8px; border-top: 1px solid #444; font-size: 0.75em; color: #00bcd4; font-style: italic; }
+
         .popup-arrow {
             position: absolute; bottom: -8px; left: 50%; margin-left: -8px;
             width: 0; height: 0; border-left: 8px solid transparent;
             border-right: 8px solid transparent; border-top: 8px solid var(--primary-color);
         }
 
-        .controls-header { display: none; }
         @media (max-width: 900px) {
-            .main-container { flex-direction: column-reverse; align-items: center; padding-bottom: 70px; }
-            .visualization-area, .controls { max-width: 100%; }
-            .canvas-wrapper, .metrics-box { max-width: 100%; }
-            .controls {
-                position: fixed; bottom: 10px; left: 10px; right: 10px; width: auto;
-                max-height: calc(100% - 100px); overflow-y: auto; z-index: 10;
-                transition: transform 0.3s ease-in-out, max-height 0.3s ease-in-out;
-                background-color: rgba(42, 42, 48, 0.85);
-                backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            }
+            .main-container { flex-direction: column-reverse; padding-bottom: 80px; }
+            .controls { position: fixed; bottom: 10px; left: 10px; right: 10px; width: auto; z-index: 10; background: rgba(42, 42, 48, 0.9); backdrop-filter: blur(10px); }
             .controls.is-collapsed .controls-body { display: none; }
-            .controls.is-collapsed { transform: translateY(calc(100% - 50px)); max-height: 50px; padding: 0; }
-            .controls-header { display: block; text-align: center; padding: 15px; font-weight: 500; background-color: rgba(0,0,0,0.2); cursor: pointer; user-select: none; }
-            .controls-body { padding: 1.5em; }
+            .controls-header { display: block; text-align: center; padding: 15px; cursor: pointer; background: rgba(0,0,0,0.2); }
+            .controls-body { padding: 1.5em; max-height: 60vh; overflow-y: auto; }
         }
     </style>
 </head>
 <body>
-    <h1>Optical Visualizer</h1>
+    <h1>Lens RX Simulator</h1>
     <div class="main-container">
         <div class="controls is-collapsed">
             <div class="controls-header">Show Controls</div>
@@ -128,38 +123,36 @@
                 <div class="input-group"><label>Cylindrical Power (CYL)</label><div class="slider-group"><div class="precision-btn" id="cyl-minus">-</div><input type="range" id="cylinder" min="-6" max="6" value="4.50" step="0.25"><div class="precision-btn" id="cyl-plus">+</div><span id="cylinderValue">4.50</span></div></div>
                 <div class="input-group"><label>Axis</label><div class="slider-group"><input type="range" id="axis" min="0" max="180" value="105" step="1"><span id="axisValue">105</span></div></div>
                 <div class="input-group"><label>Lens Material</label><div class="slider-group"><input type="range" id="materialSlider" min="0" max="4" value="3"><span id="materialName">1.67 HI</span></div></div>
-                
-                <div class="input-group"><label>Edge Decentration (D_mm)</label><div class="slider-group"><input type="range" id="decentration" min="15" max="50" value="32.0" step="0.5"><span id="decentrationValue">32.0 mm</span></div></div>
+                <div class="input-group"><label>Decentration (D_mm)</label><div class="slider-group"><input type="range" id="decentration" min="15" max="50" value="32.0" step="0.5"><span id="decentrationValue">32.0 mm</span></div></div>
 
                 <div class="input-group">
-                    <label>Lens Configuration</label>
-                    <div class="lens-side-row" style="margin-bottom: 0.8em;"><label>Lens side (Ocular View):</label><label><input type="radio" name="lensSide" id="lensRight" value="R" checked><span>Right</span></label><label><input type="radio" name="lensSide" id="lensLeft" value="L"><span>Left</span></label></div>
-                    <div class="toggle-row"><label><input type="checkbox" id="progressiveToggle" /><span>Enable Progressive Simulation</span></label></div>
+                    <label>Configuration & Analysis</label>
+                    <div class="lens-side-row" style="margin-bottom: 0.8em;"><label>Ocular View:</label><label><input type="radio" name="lensSide" id="lensRight" value="R" checked><span>R</span></label><label><input type="radio" name="lensSide" id="lensLeft" value="L"><span>L</span></label></div>
+                    <div class="toggle-row" style="margin-bottom: 0.6em;"><label><input type="checkbox" id="bestPossibleToggle" /><span>Show "Best Case" Comparison</span></label></div>
+                    <div class="toggle-row" style="margin-bottom: 0.6em;"><label><input type="checkbox" id="rulerToggle" /><span>Show Seg Height Ruler</span></label></div>
+                    <div class="toggle-row"><label><input type="checkbox" id="progressiveToggle" /><span>Enable Progressive</span></label></div>
                     <div id="progressiveControls">
                         <div class="input-group" style="margin-top: 1.5em;"><label>ADD Power</label><div class="slider-group"><input type="range" id="addPower" min="0.75" max="3.50" value="2.00" step="0.25"><span id="addPowerValue">+2.00</span></div></div>
                     </div>
                 </div>
-                <div class="input-group"><label>Screen Calibration</label><div class="cal-row"><span style="font-size:0.8em; color:#aaa;">Bar says 50 mm, I measured</span><input type="number" id="measuredMm" value="36" min="10" max="100" step="0.1"><span style="font-size:0.8em; color:#aaa;">mm</span><button id="applyCalBtn">Apply</button></div><div class="calibration-hint">Measure the white bar height with a ruler. It represents physical thickness.</div><div class="scale-readout">Scale: <span id="scaleValue">1.00×</span></div></div>
+                <div class="input-group"><label>Screen Calibration</label><div class="cal-row"><input type="number" id="measuredMm" value="36" min="10" max="100" step="0.1"><span>measured mm</span><button id="applyCalBtn">Apply</button></div><div class="scale-readout">Scale: <span id="scaleValue">1.00×</span></div></div>
             </div>
         </div>
+        
         <div class="visualization-area">
             <div class="canvas-wrapper"><canvas id="lensCanvas"></canvas></div>
-            <div class="metrics-box" id="metricsBox">
+            <div class="metrics-box">
                 <div class="metric"><div class="metric-label">Comfort Zone</div><div class="metric-value" id="clarityDiameterValue">-- mm</div></div>
                 
-                <div class="metric" id="distortionMetricBtn">
-                    <div class="metric-label">Distortion <span class="info-icon">?</span></div>
-                    <div class="metric-value" id="distortionValue">-- %</div>
-                    <div class="distortion-popup" id="distortionPopup">
-                        <h4>Distortion Perception</h4>
-                        <p>Likely patient experience based on calculated off-axis astigmatism and magnification error:</p>
-                        <ul>
-                            <li><span>0 - 15%</span> <span>Negligible</span></li>
-                            <li><span>16 - 30%</span> <span>Mild Softness</span></li>
-                            <li><span>31 - 50%</span> <span>Noticeable Blur</span></li>
-                            <li><span>51 - 75%</span> <span>"Swim" Effect</span></li>
-                            <li><span>75% +</span> <span>Major Fishbowl</span></li>
-                        </ul>
+                <div class="metric" id="riskMetricBtn">
+                    <div class="metric-label">Comfort Risk <span class="info-icon">?</span></div>
+                    <div class="metric-value" id="riskValue">--</div>
+                    <div class="metric-sub" id="riskConfidence">Confidence: --</div>
+                    <div class="risk-popup" id="riskPopup">
+                        <h4>Optical Comfort Risk</h4>
+                        <div class="risk-scale" id="riskScaleContainer"></div>
+                        <div class="driver-list" id="driverList"></div>
+                        <div class="best-comparison" id="bestCompareLine" style="display:none;"></div>
                         <div class="popup-arrow"></div>
                     </div>
                 </div>
@@ -169,7 +162,6 @@
             </div>
         </div>
     </div>
-</div>
 
 <script>
 // =========================
@@ -177,9 +169,9 @@
 // =========================
 const ui = {};
 ['sphere','sphereValue','cylinder','cylinderValue','axis','axisValue','materialSlider','materialName',
- 'decentration', 'decentrationValue', 'clarityDiameterValue','distortionValue','centerThicknessValue','edgeThicknessValue',
+ 'decentration', 'decentrationValue', 'clarityDiameterValue','riskValue','riskConfidence', 'centerThicknessValue','edgeThicknessValue',
  'sph-minus','sph-plus','cyl-minus','cyl-plus','measuredMm','applyCalBtn','scaleValue',
- 'progressiveToggle','progressiveControls','addPower','addPowerValue','lensRight','lensLeft'].forEach(id => ui[id] = document.getElementById(id));
+ 'progressiveToggle','progressiveControls','addPower','addPowerValue','lensRight','lensLeft', 'rulerToggle', 'bestPossibleToggle'].forEach(id => ui[id] = document.getElementById(id));
 
 const canvas = document.getElementById('lensCanvas');
 const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -191,695 +183,245 @@ const controlsHeader = document.querySelector('.controls-header');
 
 let dpr = 1, basePxPerMmPhysical = 4, calibrationScale = 1.0;
 
-// UPDATED MATERIALS: Adjusted Center Thickness (minCT) and tuning correction
-// based on lab notes.
 const MATERIALS = {
-  "1.50": { name: "CR-39 (1.50)",         n: 1.498, minCT: 2.0, minET: 2.0, correction: 1.0, factor: 0.8 },
-  "1.59": { name: "Polycarbonate (1.59)", n: 1.586, minCT: 1.6, minET: 1.5, correction: 1.2, factor: 1.0 }, 
-  "1.60": { name: "High Index (1.60)",    n: 1.60,  minCT: 1.0, minET: 1.0, correction: 0.8, factor: 1.8 }, 
-  "1.67": { name: "High Index (1.67)",    n: 1.67,  minCT: 1.0, minET: 1.0, correction: 1.0, factor: 2.2 }, 
-  "1.74": { name: "High Index (1.74)",    n: 1.74,  minCT: 1.0, minET: 1.0, correction: -0.2, factor: 4.5 } 
+  "1.50": { name: "CR-39 (1.50)",         n: 1.50, centerThickness: 1.9, minEdge: 2.0, factor: 0.8 },
+  "1.59": { name: "Polycarbonate (1.59)", n: 1.59, centerThickness: 1.6, minEdge: 1.5, factor: 1.2 }, 
+  "1.60": { name: "High Index (1.60)",    n: 1.60, centerThickness: 1.1, minEdge: 1.5, factor: 1.8 }, 
+  "1.67": { name: "High Index (1.67)",    n: 1.67, centerThickness: 1.1, minEdge: 1.5, factor: 2.5 }, 
+  "1.74": { name: "High Index (1.74)",    n: 1.74, centerThickness: 1.1, minEdge: 1.5, factor: 3.5 } 
 };
 const MATERIAL_KEYS = Object.keys(MATERIALS);
+
+const RISK_BANDS = [
+    { range: [0, 5], label: "Near-Perfect" },
+    { range: [6, 12], label: "Excellent" },
+    { range: [13, 20], label: "Very Good" },
+    { range: [21, 30], label: "Good" },
+    { range: [31, 40], label: "Mostly Fine" },
+    { range: [41, 50], label: "Borderline" },
+    { range: [51, 60], label: "Challenging" },
+    { range: [61, 70], label: "High Risk" },
+    { range: [71, 82], label: "Very High Risk" },
+    { range: [83, 92], label: "Severe Risk" },
+    { range: [93, 100], label: "Fishbowl Territory" }
+];
 
 // =========================
 // UTILITIES
 // =========================
 function lerp(a,b,t){return a+(b-a)*t;}
 function clamp(v,min,max){return Math.max(min, Math.min(max,v));}
-function getAnisotropy(cyl){ return Math.min(1 + 0.15 * Math.abs(cyl), 1.7); }
-function calculateBaseScale() {
-    const probe = document.createElement('div');
-    probe.style.cssText='position:absolute;top:-9999px;width:1mm;height:1mm;';
-    document.body.appendChild(probe);
-    dpr = window.devicePixelRatio || 1;
-    basePxPerMmPhysical = (probe.getBoundingClientRect().width > 0 ? probe.getBoundingClientRect().width : 3.78) * dpr;
-    document.body.removeChild(probe);
+function clamp01(v) { return clamp(v, 0, 1); }
+function getAnisotropy(cyl){ return Math.min(1 + 0.12 * Math.abs(cyl), 1.6); }
+
+function normalizeRx(sph, cyl, axis) {
+    if (cyl > 0) return { sph: sph + cyl, cyl: -cyl, axis: (axis + 90) % 180 };
+    return { sph, cyl, axis };
 }
+
+function getBandData(score) {
+    return RISK_BANDS.find(b => score >= b.range[0] && score <= b.range[1]) || RISK_BANDS[RISK_BANDS.length-1];
+}
+
+function calculateBaseScale() {
+    const p = document.createElement('div'); p.style.cssText='position:absolute;top:-999px;width:1mm;';
+    document.body.appendChild(p); dpr = window.devicePixelRatio || 1;
+    basePxPerMmPhysical = (p.getBoundingClientRect().width || 3.78) * dpr;
+    document.body.removeChild(p);
+}
+
 function getPxPerMm() { return basePxPerMmPhysical * calibrationScale; }
+
 function setupCanvas() {
-    const rect = canvas.getBoundingClientRect(); dpr = window.devicePixelRatio||1;
-    canvas.width=Math.round(rect.width*dpr); canvas.height=Math.round(rect.height*dpr);
+    const r = canvas.getBoundingClientRect(); dpr = window.devicePixelRatio||1;
+    canvas.width=Math.round(r.width*dpr); canvas.height=Math.round(r.height*dpr);
     canvas.logicalWidth=canvas.width; canvas.logicalHeight=canvas.height;
     offscreenCanvas.width=canvas.width; offscreenCanvas.height=canvas.height;
 }
 
 // =========================
-// OPTICAL MATH (UPDATED)
+// MATH ENGINES
 // =========================
-function calculateThicknessProfile(p) {
+
+function calculateThicknesses(p) {
     const D_mm = p.decentration;
-    
-    // Calculate total effective power in the thickest meridian
-    // For minus, edge is thickest. For plus, center is thickest.
-    const Peff_mag = p.sph + (p.cyl / 2); // Approximate mean power
-    
+    const maxMeridianPower = Math.abs(p.sph) > Math.abs(p.sph + p.cyl) ? p.sph : (p.sph + p.cyl);
     const refractiveFactor = 2000 * (p.material.n - 1);
-    
-    // Calculate Sagitta (Curve depth)
-    const sagitta = (D_mm * D_mm * Math.abs(Peff_mag)) / refractiveFactor;
-    
-    // Correction factor from lab data tuning
-    const correction = (p.material.correction || 0) * (Math.abs(Peff_mag) / 8); 
-
+    const sagitta = (D_mm * D_mm * Math.abs(maxMeridianPower)) / refractiveFactor;
     let centerT, edgeT;
-
-    if (Peff_mag > 0) {
-        // PLUS LENS (Convex)
-        // Edge is thin (fixed min), Center is thick (variable)
-        edgeT = p.material.minET;
-        centerT = edgeT + sagitta + correction;
-    } else {
-        // MINUS LENS (Concave)
-        // Center is thin (fixed min), Edge is thick (variable)
-        centerT = p.material.minCT;
-        edgeT = centerT + sagitta + correction;
-    }
-
+    if (maxMeridianPower > 0) { edgeT = p.material.minEdge; centerT = edgeT + sagitta; } 
+    else { centerT = p.material.centerThickness; edgeT = centerT + sagitta; }
     return { centerT, edgeT };
 }
 
+function calculateRisk(p) {
+    const SE = p.sph + p.cyl/2;
+    const absSE = Math.abs(SE);
+    const absCyl = Math.abs(p.cyl);
+    const decOver = Math.max(0, p.decentration - 24);
+
+    const seN = 1 - Math.exp(-absSE / 8.0); 
+    const cylN = 1 - Math.exp(-absCyl / 3.0);
+    const decN = 1 - Math.exp(-decOver / 14.0); 
+    const plusN = clamp01(SE / 9);
+    const progN = p.prog ? 1 : 0;
+    const indexMitigation = clamp01((p.material.n - 1.50) / 0.24); 
+
+    const comp1 = seN * decN;
+    const comp2 = cylN * decN;
+    const comp3 = seN * cylN * 0.7;
+
+    let baseScore = (0.44 * seN) + (0.20 * cylN) + (0.20 * decN) + (0.10 * plusN) + (0.15 * progN);
+    let interactionScore = (0.22 * comp1) + (0.12 * comp2) + (0.10 * comp3);
+    const materialBenefit = indexMitigation * 0.15 * (seN + 0.5); 
+
+    let score01 = clamp01(baseScore + interactionScore - materialBenefit);
+    const riskScore = Math.round(100 * Math.pow(score01, 1.05));
+
+    const midPenalty = 1 - Math.abs((riskScore/100) - 0.5) * 2;
+    const confidence = Math.round(100 * clamp(0.92 - 0.18*midPenalty - 0.10*decN, 0.2, 0.95));
+
+    const drivers = [];
+    if (absSE > 5) drivers.push("High SE Rx");
+    if (absCyl > 2.5) drivers.push("Significant CYL");
+    if (p.decentration > 36) drivers.push("Significant Decentration");
+    if (p.prog) drivers.push("Progressive Overlay");
+    if (indexMitigation > 0.4) drivers.push("Index Mitigation Active");
+
+    return { riskScore, confidence, drivers };
+}
+
+function calculateBestCase(p) {
+    const normalized = normalizeRx(p.sph, p.cyl, p.axis);
+    const SE = p.sph + p.cyl/2;
+    const absSE = Math.abs(SE);
+    const targetMaterial = (absSE > 4.5 || p.decentration > 38) ? MATERIALS["1.74"] : MATERIALS["1.60"];
+    const targetDec = 31; 
+
+    const bestP = { ...normalized, decentration: targetDec, material: targetMaterial, prog: p.prog };
+    const baseRisk = calculateRisk(bestP).riskScore;
+    const asphBonus = clamp01(absSE / 10) * 0.08;
+    const bestScore = Math.round(baseRisk * (1 - asphBonus));
+    return { score: bestScore, band: getBandData(bestScore).label, mat: targetMaterial.name, dec: targetDec };
+}
+
+// =========================
+// RENDERING & UI
+// =========================
+
+function updateRiskUI(p) {
+    const current = calculateRisk(p);
+    const band = getBandData(current.riskScore);
+    
+    ui.riskValue.textContent = `${band.label} (${current.riskScore})`;
+    ui.riskConfidence.textContent = `Confidence: ${current.confidence}%`;
+
+    let scaleHtml = "";
+    let bestCase = null;
+    if (ui.bestPossibleToggle.checked) {
+        bestCase = calculateBestCase(p);
+        document.getElementById('bestCompareLine').style.display = 'block';
+        document.getElementById('bestCompareLine').textContent = `Best Case (${bestCase.mat} @ ${bestCase.dec}mm): ${bestCase.band} (${bestCase.score})`;
+    } else {
+        document.getElementById('bestCompareLine').style.display = 'none';
+    }
+
+    RISK_BANDS.forEach(b => {
+        const isActive = b.label === band.label;
+        const isBest = bestCase && b.label === bestCase.band;
+        scaleHtml += `<div class="band-item ${isActive ? 'active' : ''} ${isBest ? 'best' : ''}">
+            <span>${b.label}</span><span>${b.range[0]}-${b.range[1]}</span>
+        </div>`;
+    });
+    document.getElementById('riskScaleContainer').innerHTML = scaleHtml;
+
+    let driversHtml = "<h5>Risk Factors & Mitigation</h5>";
+    if (current.drivers.length === 0) driversHtml += "<div class='driver-tag'>Standard Geometry</div>";
+    current.drivers.forEach(d => driversHtml += `<div class='driver-tag'>${d}</div>`);
+    document.getElementById('driverList').innerHTML = driversHtml;
+}
+
 function calculateSVMetrics(p) {
-    const baseP=Math.abs(p.sph), totalP=Math.abs(p.sph+p.cyl);
-    const dR=p.material.factor, maxClear=45;
-    const pps=Math.pow(baseP,1.2), ppt=Math.pow(totalP,1.2);
-    const cds=Math.max(8,maxClear-pps*(3.0/dR));
-    const cdt=Math.max(8,maxClear-ppt*(3.0/dR));
-    const rawD=Math.pow(baseP,1.5)+Math.pow(totalP,1.6);
-    
-    // New Thickness Logic
-    const thickData = calculateThicknessProfile(p);
-    const centerT = thickData.centerT;
-    const edgeT = thickData.edgeT;
-
-    const thicknessFactor = (edgeT / centerT) / 2; 
-    const modifiedRawD = rawD * thicknessFactor;
-    const dS = Math.min(100, modifiedRawD / dR);
-
-    return { cds, cdt, dS, edgeT, centerT, blur:dS/8, warp:-p.sph*0.02*(1+dS*0.01), twist:-p.cyl*0.1*(1+dS*0.01) };
+    const baseP = Math.abs(p.sph);
+    const totalP = Math.abs(p.sph + p.cyl);
+    const dR = p.material.factor;
+    const maxClear = 48;
+    const cds = Math.max(10, maxClear - Math.pow(baseP, 1.15) * (4.5 / dR));
+    const cdt = Math.max(10, maxClear - Math.pow(totalP, 1.15) * (4.5 / dR));
+    const { centerT, edgeT } = calculateThicknesses(p);
+    const risk = calculateRisk(p);
+    return { cds, cdt, dS: risk.riskScore, edgeT, centerT, warp: -p.sph * 0.015 * (1 + (2.0/dR)), twist: -p.cyl * 0.08 * (1 + (2.0/dR)) };
 }
 
-function distortionScoreAt(dx, dy, w, h, p, metrics) {
-    const r=Math.sqrt(dx*dx+dy*dy), maxR=Math.sqrt(w*w+h*h)/2, rNorm=r/maxR;
-    const theta=Math.atan2(dy,dx), axisRad=(p.axis*Math.PI)/180;
-    const radial=Math.abs(metrics.warp)*Math.pow(rNorm,1.5);
-    const nasalBias = (p.side === 'R' && dx > 0) || (p.side === 'L' && dx < 0) ? 1.2 : 0.9;
-    const twist=Math.abs(metrics.twist)*nasalBias*Math.pow(rNorm,2)*Math.abs(Math.sin(2*(theta-axisRad)));
-    return radial+twist;
-}
-
-// =========================
-// HEATMAPS & RENDERING
-// =========================
-function createWarpBackground(offCtx, w, h, p, metrics) {
-    offCtx.clearRect(0, 0, w, h); 
-    if (p.prog) {
-        drawProgressiveHeatMap(offCtx, w, h, p, metrics);
-    } else {
-        drawAdvancedSVHeatmap(offCtx, w, h, p, metrics);
-    }
-}
-
-function heatColor(t){
-    t = clamp(t,0,1); let r,g,b;
-    if(t<0.25){ r=lerp(0,57,t/0.25); g=lerp(191,255,t/0.25); b=lerp(255,20,t/0.25); }
-    else if(t<0.5){ r=lerp(57,255,(t-0.25)/0.25); g=255; b=lerp(20,0,(t-0.25)/0.25); }
-    else if(t<0.75){ r=255; g=lerp(255,165,(t-0.5)/0.25); b=0; }
-    else{ r=255; g=lerp(165,0,(t-0.75)/0.25); b=0; }
-    return `rgba(${r.toFixed(0)},${g.toFixed(0)},${b.toFixed(0)},1.0)`; 
-}
-
-function drawAdvancedSVHeatmap(ctx2, w, h, p, metrics){
-    const cx=w/2, cy=h/2, pxPerMm=getPxPerMm();
-    const maxRpx = Math.sqrt(w*w+h*h)/2;
-    const clearRpx = Math.min(metrics.cds, metrics.cdt)/2 * pxPerMm;
-    const axisRad = (p.axis*Math.PI)/180;
-    const aniso = getAnisotropy(p.cyl);
-
-    ctx2.save();
-    ctx2.translate(cx, cy);
-    ctx2.rotate(axisRad);
-    ctx2.scale(aniso, 1/aniso);
-
-    const grad = ctx2.createRadialGradient(0, 0, clearRpx * 0.2, 0, 0, maxRpx);
-    grad.addColorStop(0, 'rgba(0, 191, 255, 1)');     
-    grad.addColorStop(clearRpx/maxRpx, 'rgba(57, 255, 20, 1)'); 
-    grad.addColorStop((clearRpx*1.5)/maxRpx, 'rgba(255, 255, 0, 1)'); 
-    grad.addColorStop(1, 'rgba(255, 0, 0, 1)');       
-
-    ctx2.fillStyle = grad;
-    ctx2.fillRect(-maxRpx*2, -maxRpx*2, maxRpx*4, maxRpx*4);
-    ctx2.restore();
-}
-
-function drawProgressiveHeatMap(ctx2, w, h, p, metrics){
-    const pxPerMm=getPxPerMm(), cx=w/2, cy=h/2;
-    const dropMm=11, insetMm=3, nasalSign=(p.side==='R'?-1:1);
-    const dropPx=dropMm*pxPerMm, insetPx=insetMm*pxPerMm;
-    const dStrength=clamp(metrics.dS/100,0,1);
-    const baseWidthTop=lerp(12, 5, dStrength), baseWidthBot=lerp(7, 4, dStrength);
-    
-    function centerX(y){ const t=clamp((y-cy)/dropPx,0,1); return cx+nasalSign*insetPx*(t*(1-0.3*t)-0.15*Math.pow(t,3)); }
-    function halfWidth(y){ const t=clamp((y-cy)/dropPx,0,1); return (lerp(baseWidthTop,baseWidthBot,t)*(1-0.6*Math.sin(Math.PI*t)))*pxPerMm; }
-
-    ctx2.fillStyle='rgba(255,0,0,1)'; 
-    ctx2.fillRect(0,0,w,h);
-    
-    const imgData=ctx2.getImageData(0,0,w,h), data=imgData.data;
-    
-    for(let y=0;y<h;y++){
-        for(let x=0;x<w;x++){
-            const dx=x-cx, dy=y-cy;
-            const cX=centerX(y), hW=halfWidth(y)||1;
-            const distFromCorr=Math.abs(x-cX)/hW;
-            
-            let vPenalty=0;
-            if(y<cy-6*pxPerMm) vPenalty=((cy-6*pxPerMm)-y)/(6*pxPerMm);
-            if(y>cy+dropPx+4*pxPerMm) vPenalty=(y-(cy+dropPx+4*pxPerMm))/(6*pxPerMm);
-            
-            const astigPenalty=clamp(distortionScoreAt(dx,dy,w,h,p,metrics)*3.0,0,5);
-            const isNasal = (x-cx)*nasalSign > 0;
-            const nasalBoost=clamp(isNasal ? Math.abs(x-cx)/(10*pxPerMm) : 0, 0, 1.2)*clamp((y-cy)/dropPx,0,1);
-            
-            let clarityScore = distFromCorr*(1.2+dStrength*2.0)+astigPenalty*(0.8+nasalBoost)+clamp(vPenalty,0,2)*0.7;
-            clarityScore*=(0.6+0.4*clamp((y-cy)/dropPx,0,1));
-            
-            const col=heatColor(clamp(clarityScore/3.5,0,1));
-            const parts=col.match(/rgba\((\d+),(\d+),(\d+),([\d.]+)\)/);
-            const idx=(y*w+x)*4;
-            data[idx]=parseInt(parts[1]); data[idx+1]=parseInt(parts[2]); data[idx+2]=parseInt(parts[3]); data[idx+3]=255;
-        }
-    }
-    ctx2.putImageData(imgData,0,0);
-}
-
-// STRONG DISTORTION GRID
-function drawDistortedGrid(ctx2, w, h, p, metrics) {
-    const pxPerMm = getPxPerMm();
-    const step = 4.0 * pxPerMm; 
-    const cx = w/2, cy = h/2;
-    const axisRad = (p.axis*Math.PI)/180;
-
-    ctx2.strokeStyle = 'rgba(0, 0, 0, 0.5)'; 
-    ctx2.lineWidth = 1.2 * dpr;
-    ctx2.beginPath();
-
-    const getDistortedPoint = (ox, oy) => {
-        let dx = ox - cx;
-        let dy = oy - cy;
-        const r = Math.sqrt(dx*dx + dy*dy);
-        const rNorm = r / (w/2);
-        const theta = Math.atan2(dy, dx);
-
-        let powerAtPoint = p.sph;
-        if(p.prog && dy > 0) {
-            const progression = clamp(dy/(12*pxPerMm), 0, 1);
-            powerAtPoint += p.add * progression;
-        }
-        
-        const k = 0.05; 
-        const indexFactor = (1.6 / p.material.n); 
-        const magEffect = powerAtPoint * k * indexFactor; 
-        const safeMagEffect = Math.min(magEffect, 0.75); 
-        const magFactor = 1 / (1 - safeMagEffect); 
-        
-        const warp = metrics.warp * 3.0; 
-        const twist = metrics.twist * 3.0;
-        
-        const radialShift = magFactor * (1 + warp * 0.2 * Math.pow(rNorm, 2));
-        const twistAngle = twist * 0.2 * Math.pow(rNorm, 2) * Math.sin(2*(theta - axisRad));
-
-        const finalR = r * radialShift;
-        const finalTheta = theta - twistAngle;
-
-        return {
-            x: cx + finalR * Math.cos(finalTheta),
-            y: cy + finalR * Math.sin(finalTheta)
-        };
-    };
-
-    const buffer = Math.max(w, h) * 0.6; 
-    
-    for (let x = -buffer; x <= w + buffer; x += step) {
-        for (let y = -buffer; y <= h + buffer; y += 10) { 
-            const pt = getDistortedPoint(x, y);
-            if (y === -buffer) ctx2.moveTo(pt.x, pt.y);
-            else ctx2.lineTo(pt.x, pt.y);
-        }
-    }
-    for (let y = -buffer; y <= h + buffer; y += step) {
-        for (let x = -buffer; x <= w + buffer; x += 10) {
-            const pt = getDistortedPoint(x, y);
-            if (x === -buffer) ctx2.moveTo(pt.x, pt.y);
-            else ctx2.lineTo(pt.x, pt.y);
-        }
-    }
-    ctx2.stroke();
-}
-
-function drawRayMappedView(p, metrics) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const w=offscreenCanvas.width, h=offscreenCanvas.height;
-    ctx.drawImage(offscreenCanvas, 0, 0);
-    drawDistortedGrid(ctx, w, h, p, metrics);
-}
-
-// CLINICAL OVERLAY
-function drawClinicalOverlay(p, metrics) {
-    const w=canvas.logicalWidth, h=canvas.logicalHeight, pxPerMm=getPxPerMm();
-    const cx=w/2, cy=h/2;
-    
-    ctx.strokeStyle='rgba(0,0,0,0.7)'; ctx.lineWidth=2; ctx.setLineDash([]);
-    ctx.beginPath(); 
-    ctx.moveTo(cx - 10*dpr, cy); ctx.lineTo(cx + 10*dpr, cy);
-    ctx.moveTo(cx, cy - 10*dpr); ctx.lineTo(cx, cy + 10*dpr);
-    ctx.stroke();
-    
-    if(!p.prog){
-        const comfortR=Math.min(metrics.cds,metrics.cdt)/2*pxPerMm;
-        const axisRad=(p.axis*Math.PI)/180;
-        const aniso=getAnisotropy(p.cyl);
-        
-        ctx.lineWidth=3; ctx.strokeStyle='rgba(255,255,255,0.8)'; 
-        ctx.beginPath(); ctx.ellipse(cx,cy,comfortR*aniso,comfortR/aniso,axisRad,0,2*Math.PI); ctx.stroke();
-    } else {
-        const distY = cy - (4 * pxPerMm);
-        const nasalSign = (p.side === 'R' ? -1 : 1);
-        const nearX = cx + (3 * nasalSign * pxPerMm);
-        const nearY = cy + (17 * pxPerMm);
-        
-        ctx.lineWidth=3; ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.setLineDash([]);
-        ctx.beginPath(); ctx.arc(cx, distY, 4*pxPerMm, 0, 2*Math.PI); ctx.stroke();
-        ctx.beginPath(); ctx.arc(nearX, nearY, 4*pxPerMm, 0, 2*Math.PI); ctx.stroke();
-        
-        ctx.fillStyle='rgba(255,255,255,0.8)'; ctx.font=`${10*dpr}px sans-serif`; ctx.textAlign='center';
-        ctx.fillText("DIST", cx, distY - 5*pxPerMm);
-        ctx.fillText("NEAR", nearX, nearY + 6*pxPerMm);
-    }
-    drawCalibrationBar(pxPerMm,w,h, metrics.edgeT);
-}
-
-function drawCalibrationBar(pxPerMm,w,h, thicknessMm){
-    const barW=50*pxPerMm;
-    const barH = thicknessMm * pxPerMm; 
-    const margin=20*dpr;
-    
-    ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1;
-    ctx.strokeRect(margin, h-barH-margin, barW, barH);
-    ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.fillRect(margin, h-barH-margin, barW, barH);
-    
-    ctx.fillStyle='#fff'; ctx.font=`${12*dpr}px sans-serif`; 
-    ctx.textBaseline='bottom'; ctx.textAlign='left';
-    ctx.fillText('50 mm Scale', margin, h-barH-margin-4*dpr);
-    
-    ctx.textAlign='right';
-    ctx.fillText(`Max Edge: ${thicknessMm.toFixed(1)}mm`, margin+barW, h-barH-margin-4*dpr);
-    
-    ctx.beginPath(); ctx.strokeStyle = '#00bcd4'; ctx.lineWidth = 2;
-    ctx.moveTo(margin + barW + 5, h - margin); ctx.lineTo(margin + barW + 5, h - margin - barH);
-    ctx.stroke();
-}
-
-// =========================
-// MASTER RENDER & UI
-// =========================
 function drawVisualization() {
     const materialKey = MATERIAL_KEYS[parseInt(ui.materialSlider.value)];
+    const rawSph = parseFloat(ui.sphere.value) || 0;
+    const rawCyl = parseFloat(ui.cylinder.value) || 0;
+    const rawAxis = parseInt(ui.axis.value) || 0;
+    const normalized = normalizeRx(rawSph, rawCyl, rawAxis);
+    
     const p={
-        sph:parseFloat(ui.sphere.value)||0, cyl:parseFloat(ui.cylinder.value)||0, axis:parseInt(ui.axis.value)||0,
+        sph: normalized.sph, cyl: normalized.cyl, axis: normalized.axis,
         decentration: parseFloat(ui.decentration.value) || 0,
         material: MATERIALS[materialKey], 
-        prog:ui.progressiveToggle.checked, 
-        side:document.querySelector('input[name="lensSide"]:checked').value,
+        prog: ui.progressiveToggle.checked, 
+        showRuler: ui.rulerToggle.checked,
+        side: document.querySelector('input[name="lensSide"]:checked').value,
         add: (ui.progressiveToggle.checked && ui.addPower) ? parseFloat(ui.addPower.value) : 0
     };
     
     const metrics=calculateSVMetrics(p);
-    ui.clarityDiameterValue.textContent=`${Math.min(metrics.cds,metrics.cdt).toFixed(1)} mm`;
-    ui.distortionValue.textContent=`${metrics.dS.toFixed(0)} %`;
+    ui.clarityDiameterValue.textContent=`${Math.min(metrics.cds, metrics.cdt).toFixed(1)} mm`;
     ui.centerThicknessValue.textContent = `${metrics.centerT.toFixed(1)} mm`;
     ui.edgeThicknessValue.textContent = `${metrics.edgeT.toFixed(1)} mm`;
-
-    createWarpBackground(offscreenCtx,canvas.width,canvas.height,p,metrics);
-    drawRayMappedView(p,metrics);
-    drawClinicalOverlay(p,metrics);
-}
-function updateAndRedraw(){
-    ui.sphereValue.textContent = parseFloat(ui.sphere.value).toFixed(2);
-    ui.cylinderValue.textContent = parseFloat(ui.cylinder.value).toFixed(2);
-    ui.axisValue.textContent = ui.axis.value;
-    ui.decentrationValue.textContent = `${parseFloat(ui.decentration.value).toFixed(1)} mm`;
-    ui.materialName.textContent = MATERIALS[MATERIAL_KEYS[parseInt(ui.materialSlider.value)]].name;
-    if(ui.progressiveToggle.checked && ui.addPowerValue) {
-        ui.addPowerValue.textContent = `+${parseFloat(ui.addPower.value).toFixed(2)}`;
-    }
-    drawVisualization();
-}
-function adjustSlider(s,v){
-    if (!s) return;
-    s.value=clamp(parseFloat(s.value)+v,parseFloat(s.min),parseFloat(s.max));
-    updateAndRedraw();
-}
-
-// POPUP LOGIC
-const distortionBtn = document.getElementById('distortionMetricBtn');
-const distortionPopup = document.getElementById('distortionPopup');
-distortionBtn.addEventListener('click', (e) => {
-    e.stopPropagation(); // Prevent immediate close
-    const isActive = distortionPopup.classList.contains('active');
-    distortionPopup.classList.toggle('active');
-});
-document.addEventListener('click', (e) => {
-    if(distortionPopup.classList.contains('active')) {
-        distortionPopup.classList.remove('active');
-    }
-});
-
-controlsHeader.addEventListener('click', () => {
-    const isCollapsed = controlsContainer.classList.toggle('is-collapsed');
-    controlsHeader.textContent = isCollapsed ? 'Show Controls' : 'Hide Controls';
-});
-
-ui.progressiveToggle.addEventListener('input', () => {
-    ui.progressiveControls.style.display = ui.progressiveToggle.checked ? 'block' : 'none';
-    updateAndRedraw();
-});
-
-document.querySelectorAll('input[name="lensSide"]').forEach(r => {
-    r.addEventListener('input', updateAndRedraw);
-});
-
-controls.forEach(el=> {
-    if (el.id !== 'progressiveToggle' && el.name !== 'lensSide') {
-        el.addEventListener('input',updateAndRedraw);
-    }
-});
-ui['sph-minus'].addEventListener('click',()=>adjustSlider(ui.sphere,-0.25)); ui['sph-plus'].addEventListener('click',()=>adjustSlider(ui.sphere,0.25));
-ui['cyl-minus'].addEventListener('click',()=>adjustSlider(ui.cylinder,-0.25)); ui['cyl-plus'].addEventListener('click',()=>adjustSlider(ui.cylinder,0.25));
-ui.applyCalBtn.addEventListener('click',()=>{
-    const m=parseFloat(ui.measuredMm.value); if(!isFinite(m)||m<=0)return;
-    calibrationScale=50/m; ui.scaleValue.textContent=calibrationScale.toFixed(2)+'×'; drawVisualization();
-});
-
-// =========================
-// INIT
-// =========================
-window.addEventListener('load',()=>{setTimeout(()=>{
-    calculateBaseScale(); 
-    setupCanvas(); 
-    ui.progressiveControls.style.display = ui.progressiveToggle.checked ? 'block' : 'none';
-    if (window.innerWidth <= 900) { controlsContainer.classList.add('is-collapsed'); controlsHeader.textContent = 'Show Controls'; }
-    else { controlsContainer.classList.remove('is-collapsed'); }
-    updateAndRedraw();
-},50);});
-window.addEventListener('resize',()=>{clearTimeout(resizeTimeout);resizeTimeout=setTimeout(()=>{
-    setupCanvas();
-    if (window.innerWidth <= 900) {
-        if (!controlsContainer.classList.contains('is-collapsed')) { controlsHeader.textContent = 'Hide Controls'; }
-        else { controlsHeader.textContent = 'Show Controls'; }
-    }
-    drawVisualization();
-},100);});
-let resizeTimeout;
-
-</script>
-</body>
-</html>
-        }
-        .precision-btn {
-            background: #444; border: 1px solid var(--border-color); color: var(--text-color);
-            width: 30px; height: 30px; border-radius: 50%; font-size: 1.4em;
-            line-height: 28px; text-align: center; cursor: pointer; user-select: none; flex-shrink: 0;
-        }
-        .slider-group span { font-size: 1.1em; font-weight: bold; color: #fff; min-width: 60px; text-align: right; }
-        .cal-row { display: flex; align-items: center; gap: 0.5em; }
-        .cal-row input[type="number"] { width: 4em; background: #1a1a1f; color: #fff; border: 1px solid #555; border-radius: 6px; padding: 0.4em 0.5em; font-size: 0.9em; text-align: right; }
-        .cal-row button { background: var(--primary-color); color: #000; border: 0; border-radius: 6px; font-size: 0.8em; font-weight: 600; padding: 0.4em 0.6em; cursor: pointer; }
-        .calibration-hint, .metric-small { color: #777; font-size: 0.7em; line-height: 1.3em; margin-top: 0.4em; }
-        .scale-readout { color: #aaa; font-size: 0.8em; margin-top: 0.4em; font-family: monospace; }
-        .toggle-row, .lens-side-row { display: flex; align-items: center; gap: 1em; font-size: 0.9em; color: #ddd; }
-        .toggle-row input[type="checkbox"], .lens-side-row input[type="radio"] { accent-color: var(--primary-color); margin-right: -0.5em; }
-        #progressiveControls { display: none; border-top: 1px solid var(--border-color); margin-top: 1.5em; padding-top: 1.5em;}
-        .visualization-area { display: flex; flex-direction: column; align-items: center; gap: 1.5em; flex-grow: 1; width: 100%; }
-        .canvas-wrapper {
-            position: relative; width: 100%; max-width: 80vh;
-            flex-grow: 1; aspect-ratio: 1 / 1;
-            background-color: var(--surface-color); border-radius: 12px; overflow: hidden;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3); border: 1px solid var(--border-color);
-        }
-        #lensCanvas { width: 100%; height: 100%; display: block; }
-        
-        /* Metrics Box & Popups */
-        .metrics-box {
-            background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 12px;
-            padding: 1.5em; width: 100%; max-width: 80vh; box-sizing: border-box;
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5em; position: relative;
-        }
-        .metric { text-align: center; position: relative; cursor: pointer; transition: opacity 0.2s; }
-        .metric:hover { opacity: 0.8; }
-        .metric-label { font-size: 0.8em; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5em; display: flex; align-items: center; justify-content: center; gap: 5px;}
-        .metric-value { font-size: 1.4em; font-weight: bold; color: var(--metric-value-color); line-height: 1.2em; }
-        .info-icon { font-size: 0.8em; color: var(--primary-color); border: 1px solid var(--primary-color); border-radius: 50%; width: 14px; height: 14px; line-height: 12px; text-align: center; display: inline-block; }
-
-        /* Distortion Popup Styling */
-        .distortion-popup {
-            display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
-            width: 280px; background: rgba(30, 30, 36, 0.95); border: 1px solid var(--primary-color);
-            border-radius: 8px; padding: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            z-index: 100; margin-bottom: 15px; backdrop-filter: blur(5px);
-            text-align: left; pointer-events: none; /* Initially none */
-        }
-        .distortion-popup.active { display: block; pointer-events: auto; }
-        .distortion-popup h4 { margin: 0 0 10px 0; color: var(--primary-color); font-size: 1em; font-weight: 600; border-bottom: 1px solid #444; padding-bottom: 5px; }
-        .distortion-popup p { font-size: 0.85em; color: #ddd; margin: 0 0 8px 0; line-height: 1.4; }
-        .distortion-popup ul { list-style: none; padding: 0; margin: 0; }
-        .distortion-popup li { font-size: 0.8em; color: #bbb; margin-bottom: 5px; display: flex; justify-content: space-between; }
-        .distortion-popup li span:last-child { font-weight: bold; color: #fff; }
-        .popup-arrow {
-            position: absolute; bottom: -8px; left: 50%; margin-left: -8px;
-            width: 0; height: 0; border-left: 8px solid transparent;
-            border-right: 8px solid transparent; border-top: 8px solid var(--primary-color);
-        }
-
-        .controls-header { display: none; }
-        @media (max-width: 900px) {
-            .main-container { flex-direction: column-reverse; align-items: center; padding-bottom: 70px; }
-            .visualization-area, .controls { max-width: 100%; }
-            .canvas-wrapper, .metrics-box { max-width: 100%; }
-            .controls {
-                position: fixed; bottom: 10px; left: 10px; right: 10px; width: auto;
-                max-height: calc(100% - 100px); overflow-y: auto; z-index: 10;
-                transition: transform 0.3s ease-in-out, max-height 0.3s ease-in-out;
-                background-color: rgba(42, 42, 48, 0.85);
-                backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            }
-            .controls.is-collapsed .controls-body { display: none; }
-            .controls.is-collapsed { transform: translateY(calc(100% - 50px)); max-height: 50px; padding: 0; }
-            .controls-header { display: block; text-align: center; padding: 15px; font-weight: 500; background-color: rgba(0,0,0,0.2); cursor: pointer; user-select: none; }
-            .controls-body { padding: 1.5em; }
-        }
-    </style>
-</head>
-<body>
-    <h1>Optical Visualizer</h1>
-    <div class="main-container">
-        <div class="controls is-collapsed">
-            <div class="controls-header">Show Controls</div>
-            <div class="controls-body">
-                <div class="input-group"><label>Spherical Power (SPH)</label><div class="slider-group"><div class="precision-btn" id="sph-minus">-</div><input type="range" id="sphere" min="-15" max="10" value="-10.00" step="0.25"><div class="precision-btn" id="sph-plus">+</div><span id="sphereValue">-10.00</span></div></div>
-                <div class="input-group"><label>Cylindrical Power (CYL)</label><div class="slider-group"><div class="precision-btn" id="cyl-minus">-</div><input type="range" id="cylinder" min="-6" max="6" value="4.50" step="0.25"><div class="precision-btn" id="cyl-plus">+</div><span id="cylinderValue">4.50</span></div></div>
-                <div class="input-group"><label>Axis</label><div class="slider-group"><input type="range" id="axis" min="0" max="180" value="105" step="1"><span id="axisValue">105</span></div></div>
-                <div class="input-group"><label>Lens Material</label><div class="slider-group"><input type="range" id="materialSlider" min="0" max="4" value="3"><span id="materialName">1.67 HI</span></div></div>
-                
-                <div class="input-group"><label>Edge Decentration (D_mm)</label><div class="slider-group"><input type="range" id="decentration" min="15" max="50" value="32.0" step="0.5"><span id="decentrationValue">32.0 mm</span></div></div>
-
-                <div class="input-group">
-                    <label>Lens Configuration</label>
-                    <div class="lens-side-row" style="margin-bottom: 0.8em;"><label>Lens side (Ocular View):</label><label><input type="radio" name="lensSide" id="lensRight" value="R" checked><span>Right</span></label><label><input type="radio" name="lensSide" id="lensLeft" value="L"><span>Left</span></label></div>
-                    <div class="toggle-row"><label><input type="checkbox" id="progressiveToggle" /><span>Enable Progressive Simulation</span></label></div>
-                    <div id="progressiveControls">
-                        <div class="input-group" style="margin-top: 1.5em;"><label>ADD Power</label><div class="slider-group"><input type="range" id="addPower" min="0.75" max="3.50" value="2.00" step="0.25"><span id="addPowerValue">+2.00</span></div></div>
-                    </div>
-                </div>
-                <div class="input-group"><label>Screen Calibration</label><div class="cal-row"><span style="font-size:0.8em; color:#aaa;">Bar says 50 mm, I measured</span><input type="number" id="measuredMm" value="36" min="10" max="100" step="0.1"><span style="font-size:0.8em; color:#aaa;">mm</span><button id="applyCalBtn">Apply</button></div><div class="calibration-hint">Measure the white bar height with a ruler. It represents physical thickness.</div><div class="scale-readout">Scale: <span id="scaleValue">1.00×</span></div></div>
-            </div>
-        </div>
-        <div class="visualization-area">
-            <div class="canvas-wrapper"><canvas id="lensCanvas"></canvas></div>
-            <div class="metrics-box" id="metricsBox">
-                <div class="metric"><div class="metric-label">Comfort Zone</div><div class="metric-value" id="clarityDiameterValue">-- mm</div></div>
-                
-                <div class="metric" id="distortionMetricBtn">
-                    <div class="metric-label">Distortion <span class="info-icon">?</span></div>
-                    <div class="metric-value" id="distortionValue">-- %</div>
-                    <div class="distortion-popup" id="distortionPopup">
-                        <h4>Distortion Perception</h4>
-                        <p>Likely patient experience based on calculated off-axis astigmatism and magnification error:</p>
-                        <ul>
-                            <li><span>0 - 15%</span> <span>Negligible</span></li>
-                            <li><span>16 - 30%</span> <span>Mild Softness</span></li>
-                            <li><span>31 - 50%</span> <span>Noticeable Blur</span></li>
-                            <li><span>51 - 75%</span> <span>"Swim" Effect</span></li>
-                            <li><span>75% +</span> <span>Major Fishbowl</span></li>
-                        </ul>
-                        <div class="popup-arrow"></div>
-                    </div>
-                </div>
-                
-                <div class="metric"><div class="metric-label">Center Thickness</div><div class="metric-value" id="centerThicknessValue">-- mm</div></div>
-                <div class="metric"><div class="metric-label">Est. Edge Thickness</div><div class="metric-value" id="edgeThicknessValue">-- mm</div></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-// =========================
-// SETUP
-// =========================
-const ui = {};
-['sphere','sphereValue','cylinder','cylinderValue','axis','axisValue','materialSlider','materialName',
- 'decentration', 'decentrationValue', 'clarityDiameterValue','distortionValue','centerThicknessValue','edgeThicknessValue',
- 'sph-minus','sph-plus','cyl-minus','cyl-plus','measuredMm','applyCalBtn','scaleValue',
- 'progressiveToggle','progressiveControls','addPower','addPowerValue','lensRight','lensLeft'].forEach(id => ui[id] = document.getElementById(id));
-
-const canvas = document.getElementById('lensCanvas');
-const ctx = canvas.getContext('2d', { willReadFrequently: true });
-const offscreenCanvas = document.createElement('canvas');
-const offscreenCtx = offscreenCanvas.getContext('2d', { willReadFrequently: true });
-const controls = document.querySelectorAll('.controls input');
-const controlsContainer = document.querySelector('.controls');
-const controlsHeader = document.querySelector('.controls-header');
-
-let dpr = 1, basePxPerMmPhysical = 4, calibrationScale = 1.0;
-
-const MATERIALS = {
-  "1.50": { name: "CR-39 (1.50)",         n: 1.50, centerThickness: 2.2, correction: 1.2, factor: 0.8 },
-  "1.59": { name: "Polycarbonate (1.59)", n: 1.59, centerThickness: 2.0, correction: 1.5, factor: 1.0 }, 
-  "1.60": { name: "High Index (1.60)",    n: 1.60, centerThickness: 1.9, correction: 0.6, factor: 1.8 }, 
-  "1.67": { name: "High Index (1.67)",    n: 1.67, centerThickness: 1.7, correction: 0.8, factor: 2.2 }, 
-  "1.74": { name: "High Index (1.74)",    n: 1.74, centerThickness: 1.5, correction: 0.55, factor: 4.5 } 
-};
-const MATERIAL_KEYS = Object.keys(MATERIALS);
-
-// =========================
-// UTILITIES
-// =========================
-function lerp(a,b,t){return a+(b-a)*t;}
-function clamp(v,min,max){return Math.max(min, Math.min(max,v));}
-function getAnisotropy(cyl){ return Math.min(1 + 0.15 * Math.abs(cyl), 1.7); }
-function calculateBaseScale() {
-    const probe = document.createElement('div');
-    probe.style.cssText='position:absolute;top:-9999px;width:1mm;height:1mm;';
-    document.body.appendChild(probe);
-    dpr = window.devicePixelRatio || 1;
-    basePxPerMmPhysical = (probe.getBoundingClientRect().width > 0 ? probe.getBoundingClientRect().width : 3.78) * dpr;
-    document.body.removeChild(probe);
-}
-function getPxPerMm() { return basePxPerMmPhysical * calibrationScale; }
-function setupCanvas() {
-    const rect = canvas.getBoundingClientRect(); dpr = window.devicePixelRatio||1;
-    canvas.width=Math.round(rect.width*dpr); canvas.height=Math.round(rect.height*dpr);
-    canvas.logicalWidth=canvas.width; canvas.logicalHeight=canvas.height;
-    offscreenCanvas.width=canvas.width; offscreenCanvas.height=canvas.height;
-}
-
-// =========================
-// OPTICAL MATH
-// =========================
-function calculateEdgeThickness(p) {
-    const D_mm = p.decentration;
-    const Peff_mag = Math.abs(p.sph + (p.cyl / 2));
-    const refractiveFactor = 2000 * (p.material.n - 1);
-    const centerT = p.material.centerThickness;
-    const sagitta = (D_mm * D_mm * Peff_mag) / refractiveFactor;
-    const correction = (p.material.correction || 0) * (Peff_mag / 9); 
-    return centerT + sagitta + correction;
-}
-
-function calculateSVMetrics(p) {
-    const baseP=Math.abs(p.sph), totalP=Math.abs(p.sph+p.cyl);
-    const dR=p.material.factor, maxClear=45;
-    const pps=Math.pow(baseP,1.2), ppt=Math.pow(totalP,1.2);
-    const cds=Math.max(8,maxClear-pps*(3.0/dR));
-    const cdt=Math.max(8,maxClear-ppt*(3.0/dR));
-    const rawD=Math.pow(baseP,1.5)+Math.pow(totalP,1.6);
     
-    const edgeT = calculateEdgeThickness(p);
-    const centerT = p.material.centerThickness;
-    const thicknessFactor = (edgeT / centerT) / 2; 
-    const modifiedRawD = rawD * thicknessFactor;
-    const dS = Math.min(100, modifiedRawD / dR);
-
-    return { cds, cdt, dS, edgeT, centerT, blur:dS/8, warp:-p.sph*0.02*(1+dS*0.01), twist:-p.cyl*0.1*(1+dS*0.01) };
-}
-
-function distortionScoreAt(dx, dy, w, h, p, metrics) {
-    const r=Math.sqrt(dx*dx+dy*dy), maxR=Math.sqrt(w*w+h*h)/2, rNorm=r/maxR;
-    const theta=Math.atan2(dy,dx), axisRad=(p.axis*Math.PI)/180;
-    const radial=Math.abs(metrics.warp)*Math.pow(rNorm,1.5);
-    const nasalBias = (p.side === 'R' && dx > 0) || (p.side === 'L' && dx < 0) ? 1.2 : 0.9;
-    const twist=Math.abs(metrics.twist)*nasalBias*Math.pow(rNorm,2)*Math.abs(Math.sin(2*(theta-axisRad)));
-    return radial+twist;
+    updateRiskUI(p);
+    createWarpBackground(offscreenCtx, canvas.width, canvas.height, p, metrics);
+    drawRayMappedView(p, metrics);
+    drawClinicalOverlay(p, metrics);
 }
 
 // =========================
-// HEATMAPS & RENDERING
+// CANVAS CORE
 // =========================
-function createWarpBackground(offCtx, w, h, p, metrics) {
-    offCtx.clearRect(0, 0, w, h); 
-    if (p.prog) {
-        drawProgressiveHeatMap(offCtx, w, h, p, metrics);
-    } else {
-        drawAdvancedSVHeatmap(offCtx, w, h, p, metrics);
-    }
-}
-
-function heatColor(t){
-    t = clamp(t,0,1); let r,g,b;
-    if(t<0.25){ r=lerp(0,57,t/0.25); g=lerp(191,255,t/0.25); b=lerp(255,20,t/0.25); }
-    else if(t<0.5){ r=lerp(57,255,(t-0.25)/0.25); g=255; b=lerp(20,0,(t-0.25)/0.25); }
-    else if(t<0.75){ r=255; g=lerp(255,165,(t-0.5)/0.25); b=0; }
-    else{ r=255; g=lerp(165,0,(t-0.75)/0.25); b=0; }
-    return `rgba(${r.toFixed(0)},${g.toFixed(0)},${b.toFixed(0)},1.0)`; 
+function createWarpBackground(oCtx, w, h, p, m) {
+    oCtx.clearRect(0,0,w,h);
+    if(p.prog) drawProgressiveHeatMap(oCtx, w, h, p, m);
+    else drawAdvancedSVHeatmap(oCtx, w, h, p, m);
 }
 
 function drawAdvancedSVHeatmap(ctx2, w, h, p, metrics){
     const cx=w/2, cy=h/2, pxPerMm=getPxPerMm();
     const maxRpx = Math.sqrt(w*w+h*h)/2;
     const clearRpx = Math.min(metrics.cds, metrics.cdt)/2 * pxPerMm;
-    const axisRad = (p.axis*Math.PI)/180;
-    const aniso = getAnisotropy(p.cyl);
-
+    const isPlus = (p.sph + p.cyl/2) > 0;
     ctx2.save();
-    ctx2.translate(cx, cy);
-    ctx2.rotate(axisRad);
-    ctx2.scale(aniso, 1/aniso);
-
-    const grad = ctx2.createRadialGradient(0, 0, clearRpx * 0.2, 0, 0, maxRpx);
-    grad.addColorStop(0, 'rgba(0, 191, 255, 1)');     
-    grad.addColorStop(clearRpx/maxRpx, 'rgba(57, 255, 20, 1)'); 
-    grad.addColorStop((clearRpx*1.5)/maxRpx, 'rgba(255, 255, 0, 1)'); 
-    grad.addColorStop(1, 'rgba(255, 0, 0, 1)');       
-
-    ctx2.fillStyle = grad;
-    ctx2.fillRect(-maxRpx*2, -maxRpx*2, maxRpx*4, maxRpx*4);
+    ctx2.translate(cx, cy); ctx2.rotate(p.axis*Math.PI/180);
+    ctx2.scale(getAnisotropy(p.cyl), 1/getAnisotropy(p.cyl));
+    const grad = ctx2.createRadialGradient(0, 0, clearRpx * (isPlus?0.45:0.25), 0, 0, maxRpx);
+    if (isPlus) { grad.addColorStop(0, 'rgba(255, 100, 0, 1)'); grad.addColorStop(0.3, 'rgba(0, 191, 255, 1)'); grad.addColorStop(clearRpx/maxRpx, 'rgba(57, 255, 20, 1)'); grad.addColorStop(1, 'rgba(255, 0, 0, 1)'); }
+    else { grad.addColorStop(0, 'rgba(0, 191, 255, 1)'); grad.addColorStop(clearRpx/maxRpx, 'rgba(57, 255, 20, 1)'); grad.addColorStop((clearRpx*1.4)/maxRpx, 'rgba(255, 255, 0, 1)'); grad.addColorStop(1, 'rgba(255, 0, 0, 1)'); }
+    ctx2.fillStyle = grad; ctx2.fillRect(-maxRpx*2, -maxRpx*2, maxRpx*4, maxRpx*4);
     ctx2.restore();
 }
 
+/**
+ * REVERTED PROGRESSIVE VISUALS (As per Snippet)
+ * Wide sin-wave corridor, polynomial nasal inset.
+ */
 function drawProgressiveHeatMap(ctx2, w, h, p, metrics){
     const pxPerMm=getPxPerMm(), cx=w/2, cy=h/2;
     const dropMm=11, insetMm=3, nasalSign=(p.side==='R'?-1:1);
     const dropPx=dropMm*pxPerMm, insetPx=insetMm*pxPerMm;
-    const dStrength=clamp(metrics.dS/100,0,1);
-    const baseWidthTop=lerp(12, 5, dStrength), baseWidthBot=lerp(7, 4, dStrength);
+    
+    // Internal dStrength from Risk Model for color intensity
+    const riskStrength = clamp(metrics.dS/100,0,1);
+    const baseWidthTop = lerp(12, 5, riskStrength), baseWidthBot = lerp(7, 4, riskStrength);
     
     function centerX(y){ const t=clamp((y-cy)/dropPx,0,1); return cx+nasalSign*insetPx*(t*(1-0.3*t)-0.15*Math.pow(t,3)); }
     function halfWidth(y){ const t=clamp((y-cy)/dropPx,0,1); return (lerp(baseWidthTop,baseWidthBot,t)*(1-0.6*Math.sin(Math.PI*t)))*pxPerMm; }
 
-    ctx2.fillStyle='rgba(255,0,0,1)'; 
-    ctx2.fillRect(0,0,w,h);
-    
+    ctx2.fillStyle='rgba(255,0,0,1)'; ctx2.fillRect(0,0,w,h);
     const imgData=ctx2.getImageData(0,0,w,h), data=imgData.data;
     
     for(let y=0;y<h;y++){
@@ -889,268 +431,183 @@ function drawProgressiveHeatMap(ctx2, w, h, p, metrics){
             const distFromCorr=Math.abs(x-cX)/hW;
             
             let vPenalty=0;
-            if(y<cy-6*pxPerMm) vPenalty=((cy-6*pxPerMm)-y)/(6*pxPerMm);
-            if(y>cy+dropPx+4*pxPerMm) vPenalty=(y-(cy+dropPx+4*pxPerMm))/(6*pxPerMm);
+            if(y < cy-6*pxPerMm) vPenalty = ((cy-6*pxPerMm)-y)/(6*pxPerMm);
+            if(y > cy+dropPx+4*pxPerMm) vPenalty = (y-(cy+dropPx+4*pxPerMm))/(6*pxPerMm);
             
-            const astigPenalty=clamp(distortionScoreAt(dx,dy,w,h,p,metrics)*3.0,0,5);
+            const astigPenalty = clamp(distortionScoreAt(dx,dy,w,h,p,metrics)*3.0,0,5);
             const isNasal = (x-cx)*nasalSign > 0;
-            const nasalBoost=clamp(isNasal ? Math.abs(x-cx)/(10*pxPerMm) : 0, 0, 1.2)*clamp((y-cy)/dropPx,0,1);
+            const nasalBoost = clamp(isNasal ? Math.abs(x-cx)/(10*pxPerMm) : 0, 0, 1.2)*clamp((y-cy)/dropPx,0,1);
             
-            let clarityScore = distFromCorr*(1.2+dStrength*2.0)+astigPenalty*(0.8+nasalBoost)+clamp(vPenalty,0,2)*0.7;
+            let clarityScore = distFromCorr*(1.2+riskStrength*2.0)+astigPenalty*(0.8+nasalBoost)+clamp(vPenalty,0,2)*0.7;
             clarityScore*=(0.6+0.4*clamp((y-cy)/dropPx,0,1));
             
             const col=heatColor(clamp(clarityScore/3.5,0,1));
-            const parts=col.match(/rgba\((\d+),(\d+),(\d+),([\d.]+)\)/);
+            const parts=col.match(/\d+/g);
             const idx=(y*w+x)*4;
-            data[idx]=parseInt(parts[1]); data[idx+1]=parseInt(parts[2]); data[idx+2]=parseInt(parts[3]); data[idx+3]=255;
+            data[idx]=parseInt(parts[0]); data[idx+1]=parseInt(parts[1]); data[idx+2]=parseInt(parts[2]); data[idx+3]=255;
         }
     }
     ctx2.putImageData(imgData,0,0);
 }
 
-// STRONG DISTORTION GRID with Dark Lines
+function distortionScoreAt(dx, dy, w, h, p, metrics) {
+    const r = Math.sqrt(dx*dx + dy*dy), maxR = Math.sqrt(w*w + h*h)/2, rNorm = r/maxR;
+    const theta = Math.atan2(dy, dx), axisRad = (p.axis*Math.PI)/180;
+    const radial = Math.abs(metrics.warp) * Math.pow(rNorm, 1.6);
+    const nasalBias = (p.side === 'R' && dx > 0) || (p.side === 'L' && dx < 0) ? 1.15 : 0.95;
+    const twist = Math.abs(metrics.twist) * nasalBias * Math.pow(rNorm, 2.1) * Math.abs(Math.sin(2*(theta - axisRad)));
+    return radial + twist;
+}
+
+function drawRayMappedView(p, metrics) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(offscreenCanvas, 0, 0);
+    drawDistortedGrid(ctx, canvas.width, canvas.height, p, metrics);
+}
+
 function drawDistortedGrid(ctx2, w, h, p, metrics) {
     const pxPerMm = getPxPerMm();
-    const step = 4.0 * pxPerMm; 
-    const cx = w/2, cy = h/2;
-    const axisRad = (p.axis*Math.PI)/180;
-
-    ctx2.strokeStyle = 'rgba(0, 0, 0, 0.5)'; 
-    ctx2.lineWidth = 1.2 * dpr;
-    ctx2.beginPath();
-
-    const getDistortedPoint = (ox, oy) => {
-        let dx = ox - cx;
-        let dy = oy - cy;
-        const r = Math.sqrt(dx*dx + dy*dy);
-        const rNorm = r / (w/2);
-        const theta = Math.atan2(dy, dx);
-
-        let powerAtPoint = p.sph;
-        if(p.prog && dy > 0) {
-            const progression = clamp(dy/(12*pxPerMm), 0, 1);
-            powerAtPoint += p.add * progression;
-        }
-        
-        const k = 0.05; 
-        const indexFactor = (1.6 / p.material.n); 
-        const magEffect = powerAtPoint * k * indexFactor; 
-        const safeMagEffect = Math.min(magEffect, 0.75); 
-        const magFactor = 1 / (1 - safeMagEffect); 
-        
-        const warp = metrics.warp * 3.0; 
-        const twist = metrics.twist * 3.0;
-        
-        const radialShift = magFactor * (1 + warp * 0.2 * Math.pow(rNorm, 2));
-        const twistAngle = twist * 0.2 * Math.pow(rNorm, 2) * Math.sin(2*(theta - axisRad));
-
-        const finalR = r * radialShift;
-        const finalTheta = theta - twistAngle;
-
-        return {
-            x: cx + finalR * Math.cos(finalTheta),
-            y: cy + finalR * Math.sin(finalTheta)
-        };
+    const step = 4.0 * pxPerMm; const cx = w/2, cy = h/2;
+    ctx2.strokeStyle = 'rgba(0,0,0,0.3)'; ctx2.lineWidth = 1.1*dpr; ctx2.beginPath();
+    const getPt = (ox, oy) => {
+        let dx = ox - cx, dy = oy - cy;
+        const r = Math.sqrt(dx*dx + dy*dy), rNorm = r / (w/2), theta = Math.atan2(dy, dx);
+        let power = p.sph; if(p.prog && dy > 0) power += p.add * clamp(dy/(12*pxPerMm),0,1);
+        const mag = 1 / (1 - (power * 0.045 * (1.55/p.material.n)));
+        const finalR = r * mag * (1 + metrics.warp * 2.8 * 0.18 * rNorm**2);
+        const twistAngle = metrics.twist * 2.8 * 0.18 * rNorm**2.2 * Math.sin(2*(theta - p.axis*Math.PI/180));
+        return { x: cx + finalR * Math.cos(theta - twistAngle), y: cy + finalR * Math.sin(theta - twistAngle) };
     };
-
-    // UPDATED: Grid Extension (Draw outside the visible area to allow for minification)
-    const buffer = Math.max(w, h) * 0.6; // Extra rendering space
-    
-    // Vertical Lines
-    for (let x = -buffer; x <= w + buffer; x += step) {
-        for (let y = -buffer; y <= h + buffer; y += 10) { 
-            const pt = getDistortedPoint(x, y);
-            if (y === -buffer) ctx2.moveTo(pt.x, pt.y);
-            else ctx2.lineTo(pt.x, pt.y);
+    const buf = w*0.6;
+    for(let x=-buf; x<=w+buf; x+=step){
+        for(let y=-buf; y<=h+buf; y+=15){
+            const pt = getPt(x,y); if(y===-buf) ctx2.moveTo(pt.x, pt.y); else ctx2.lineTo(pt.x, pt.y);
         }
     }
-    // Horizontal Lines
-    for (let y = -buffer; y <= h + buffer; y += step) {
-        for (let x = -buffer; x <= w + buffer; x += 10) {
-            const pt = getDistortedPoint(x, y);
-            if (x === -buffer) ctx2.moveTo(pt.x, pt.y);
-            else ctx2.lineTo(pt.x, pt.y);
+    for(let y=-buf; y<=h+buf; y+=step){
+        for(let x=-buf; x<=w+buf; x+=15){
+            const pt = getPt(x,y); if(x===-buf) ctx2.moveTo(pt.x, pt.y); else ctx2.lineTo(pt.x, pt.y);
         }
     }
     ctx2.stroke();
 }
 
-function drawRayMappedView(p, metrics) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const w=offscreenCanvas.width, h=offscreenCanvas.height;
-    ctx.drawImage(offscreenCanvas, 0, 0);
-    drawDistortedGrid(ctx, w, h, p, metrics);
-}
-
-// UPDATED: Clinical Overlay with O.C. and Progressive Marks
 function drawClinicalOverlay(p, metrics) {
     const w=canvas.logicalWidth, h=canvas.logicalHeight, pxPerMm=getPxPerMm();
     const cx=w/2, cy=h/2;
+    ctx.strokeStyle='rgba(0,0,0,0.6)'; ctx.lineWidth=2; ctx.beginPath();
+    ctx.moveTo(cx-12*dpr, cy); ctx.lineTo(cx+12*dpr, cy); ctx.moveTo(cx, cy-12*dpr); ctx.lineTo(cx, cy+12*dpr); ctx.stroke();
     
-    // Draw Permanent O.C. Cross (Center)
-    ctx.strokeStyle='rgba(0,0,0,0.7)'; ctx.lineWidth=2; ctx.setLineDash([]);
-    ctx.beginPath(); 
-    ctx.moveTo(cx - 10*dpr, cy); ctx.lineTo(cx + 10*dpr, cy);
-    ctx.moveTo(cx, cy - 10*dpr); ctx.lineTo(cx, cy + 10*dpr);
-    ctx.stroke();
+    // UPDATED: BLACK RULER
+    if (p.showRuler) {
+        ctx.save(); 
+        ctx.strokeStyle = '#000000'; 
+        ctx.fillStyle = '#000000'; 
+        ctx.font = `bold ${11*dpr}px monospace`;
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, h); ctx.stroke();
+        for (let i = 1; i < 65; i++) {
+            const ty = cy + (i * pxPerMm); if (ty > h) break;
+            const is5 = i % 5 === 0; const tw = is5 ? 14*dpr : 7*dpr;
+            ctx.beginPath(); ctx.moveTo(cx-tw/2, ty); ctx.lineTo(cx+tw/2, ty); ctx.stroke();
+            if (is5) ctx.fillText(i.toString(), cx + 12*dpr, ty);
+        }
+        ctx.restore();
+    }
     
-    if(!p.prog){
-        const comfortR=Math.min(metrics.cds,metrics.cdt)/2*pxPerMm;
-        const axisRad=(p.axis*Math.PI)/180;
-        const aniso=getAnisotropy(p.cyl);
-        
-        ctx.lineWidth=3; ctx.strokeStyle='rgba(255,255,255,0.8)'; 
-        ctx.beginPath(); ctx.ellipse(cx,cy,comfortR*aniso,comfortR/aniso,axisRad,0,2*Math.PI); ctx.stroke();
-    } else {
-        // UPDATED PROGRESSIVE MARKINGS
-        // Distance (Fitting Cross): 4mm directly above O.C.
-        // Reading Center: 17mm below O.C. and 3mm IN (Nasally)
-        
+    // Progressive Markers (Fitting Cross / Near Circle)
+    if (p.prog) {
         const distY = cy - (4 * pxPerMm);
-        
-        // Nasal Shift: If Right Eye, nose is left (-). If Left Eye, nose is right (+).
         const nasalSign = (p.side === 'R' ? -1 : 1);
         const nearX = cx + (3 * nasalSign * pxPerMm);
         const nearY = cy + (17 * pxPerMm);
-        
-        // Distance Circle
-        ctx.lineWidth=3; ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.setLineDash([]);
+        ctx.lineWidth=3; ctx.strokeStyle='rgba(255,255,255,0.85)'; ctx.setLineDash([]);
         ctx.beginPath(); ctx.arc(cx, distY, 4*pxPerMm, 0, 2*Math.PI); ctx.stroke();
-        
-        // Near Circle
         ctx.beginPath(); ctx.arc(nearX, nearY, 4*pxPerMm, 0, 2*Math.PI); ctx.stroke();
-        
-        // Optional: Label them lightly
         ctx.fillStyle='rgba(255,255,255,0.8)'; ctx.font=`${10*dpr}px sans-serif`; ctx.textAlign='center';
-        ctx.fillText("DIST", cx, distY - 5*pxPerMm);
-        ctx.fillText("NEAR", nearX, nearY + 6*pxPerMm);
+        ctx.fillText("DIST", cx, distY - 6*pxPerMm);
+        ctx.fillText("NEAR", nearX, nearY + 7*pxPerMm);
+    } else {
+        const comfortR = Math.min(metrics.cds, metrics.cdt)/2 * pxPerMm;
+        const axisRad = (p.axis*Math.PI)/180;
+        const aniso = getAnisotropy(p.cyl);
+        ctx.lineWidth=3; ctx.strokeStyle='rgba(255,255,255,0.7)'; 
+        ctx.beginPath(); ctx.ellipse(cx, cy, comfortR*aniso, comfortR/aniso, axisRad, 0, 2*Math.PI); ctx.stroke();
     }
-    drawCalibrationBar(pxPerMm,w,h, metrics.edgeT);
+    
+    drawCalibrationBar(pxPerMm, w, h, metrics.edgeT);
 }
 
-function drawCalibrationBar(pxPerMm,w,h, thicknessMm){
-    const barW=50*pxPerMm;
-    const barH = thicknessMm * pxPerMm; 
-    const margin=20*dpr;
-    
-    ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1;
-    ctx.strokeRect(margin, h-barH-margin, barW, barH);
-    ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.fillRect(margin, h-barH-margin, barW, barH);
-    
-    ctx.fillStyle='#fff'; ctx.font=`${12*dpr}px sans-serif`; 
-    ctx.textBaseline='bottom'; ctx.textAlign='left';
-    ctx.fillText('50 mm Scale', margin, h-barH-margin-4*dpr);
-    
-    ctx.textAlign='right';
-    ctx.fillText(`Max Edge: ${thicknessMm.toFixed(1)}mm`, margin+barW, h-barH-margin-4*dpr);
-    
-    ctx.beginPath(); ctx.strokeStyle = '#00bcd4'; ctx.lineWidth = 2;
-    ctx.moveTo(margin + barW + 5, h - margin); ctx.lineTo(margin + barW + 5, h - margin - barH);
-    ctx.stroke();
+function drawCalibrationBar(pxPerMm, w, h, tMm){
+    const bw=50*pxPerMm, bh=tMm*pxPerMm, m=20*dpr;
+    ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.fillRect(m, h-bh-m, bw, bh);
+    ctx.fillStyle='#fff'; ctx.font=`${11*dpr}px sans-serif`; ctx.textAlign='left';
+    ctx.fillText('50mm Calib', m, h-bh-m-4*dpr);
+    ctx.textAlign='right'; ctx.fillText(`${tMm.toFixed(1)}mm`, m+bw, h-bh-m-4*dpr);
+}
+
+function heatColor(t){
+    t = clamp(t, 0, 1); let r, g, b;
+    if(t < 0.25){ r=lerp(0, 57, t/0.25); g=lerp(191, 255, t/0.25); b=lerp(255, 20, t/0.25); }
+    else if(t < 0.5){ r=lerp(57, 255, (t-0.25)/0.25); g=255; b=lerp(20, 0, (t-0.25)/0.25); }
+    else if(t < 0.75){ r=255; g=lerp(255, 165, (t-0.5)/0.25); b=0; }
+    else{ r=255; g=lerp(165, 0, (t-0.75)/0.25); b=0; }
+    return `rgba(${r.toFixed(0)},${g.toFixed(0)},${b.toFixed(0)},1.0)`; 
 }
 
 // =========================
-// MASTER RENDER & UI
+// UI HELPERS
 // =========================
-function drawVisualization() {
-    const materialKey = MATERIAL_KEYS[parseInt(ui.materialSlider.value)];
-    const p={
-        sph:parseFloat(ui.sphere.value)||0, cyl:parseFloat(ui.cylinder.value)||0, axis:parseInt(ui.axis.value)||0,
-        decentration: parseFloat(ui.decentration.value) || 0,
-        material: MATERIALS[materialKey], 
-        prog:ui.progressiveToggle.checked, 
-        side:document.querySelector('input[name="lensSide"]:checked').value,
-        add: (ui.progressiveToggle.checked && ui.addPower) ? parseFloat(ui.addPower.value) : 0
-    };
-    
-    const metrics=calculateSVMetrics(p);
-    ui.clarityDiameterValue.textContent=`${Math.min(metrics.cds,metrics.cdt).toFixed(1)} mm`;
-    ui.distortionValue.textContent=`${metrics.dS.toFixed(0)} %`;
-    ui.centerThicknessValue.textContent = `${metrics.centerT.toFixed(1)} mm`;
-    ui.edgeThicknessValue.textContent = `${clamp(metrics.edgeT, metrics.centerT, 15).toFixed(1)} mm`;
-
-    createWarpBackground(offscreenCtx,canvas.width,canvas.height,p,metrics);
-    drawRayMappedView(p,metrics);
-    drawClinicalOverlay(p,metrics);
-}
 function updateAndRedraw(){
     ui.sphereValue.textContent = parseFloat(ui.sphere.value).toFixed(2);
     ui.cylinderValue.textContent = parseFloat(ui.cylinder.value).toFixed(2);
     ui.axisValue.textContent = ui.axis.value;
     ui.decentrationValue.textContent = `${parseFloat(ui.decentration.value).toFixed(1)} mm`;
     ui.materialName.textContent = MATERIALS[MATERIAL_KEYS[parseInt(ui.materialSlider.value)]].name;
-    if(ui.progressiveToggle.checked && ui.addPowerValue) {
-        ui.addPowerValue.textContent = `+${parseFloat(ui.addPower.value).toFixed(2)}`;
-    }
+    if(ui.progressiveToggle.checked && ui.addPowerValue) ui.addPowerValue.textContent = `+${parseFloat(ui.addPower.value).toFixed(2)}`;
     drawVisualization();
 }
-function adjustSlider(s,v){
-    if (!s) return;
-    s.value=clamp(parseFloat(s.value)+v,parseFloat(s.min),parseFloat(s.max));
+
+function adjustSlider(s, v){
+    s.value=clamp(parseFloat(s.value)+v, parseFloat(s.min), parseFloat(s.max));
     updateAndRedraw();
 }
 
-// POPUP LOGIC
-const distortionBtn = document.getElementById('distortionMetricBtn');
-const distortionPopup = document.getElementById('distortionPopup');
-distortionBtn.addEventListener('click', (e) => {
-    e.stopPropagation(); // Prevent immediate close
-    const isActive = distortionPopup.classList.contains('active');
-    // Close others if we had them, but we only have one
-    distortionPopup.classList.toggle('active');
-});
-document.addEventListener('click', (e) => {
-    if(distortionPopup.classList.contains('active')) {
-        distortionPopup.classList.remove('active');
-    }
-});
+// POPUP HANDLER
+const riskBtn = document.getElementById('riskMetricBtn');
+const riskPopup = document.getElementById('riskPopup');
+riskBtn.addEventListener('click', (e) => { e.stopPropagation(); riskPopup.classList.toggle('active'); });
+document.addEventListener('click', () => riskPopup.classList.remove('active'));
 
 controlsHeader.addEventListener('click', () => {
     const isCollapsed = controlsContainer.classList.toggle('is-collapsed');
     controlsHeader.textContent = isCollapsed ? 'Show Controls' : 'Hide Controls';
 });
 
+// LISTENERS
 ui.progressiveToggle.addEventListener('input', () => {
     ui.progressiveControls.style.display = ui.progressiveToggle.checked ? 'block' : 'none';
     updateAndRedraw();
 });
-
-document.querySelectorAll('input[name="lensSide"]').forEach(r => {
-    r.addEventListener('input', updateAndRedraw);
-});
-
-controls.forEach(el=> {
-    if (el.id !== 'progressiveToggle' && el.name !== 'lensSide') {
-        el.addEventListener('input',updateAndRedraw);
-    }
-});
-ui['sph-minus'].addEventListener('click',()=>adjustSlider(ui.sphere,-0.25)); ui['sph-plus'].addEventListener('click',()=>adjustSlider(ui.sphere,0.25));
-ui['cyl-minus'].addEventListener('click',()=>adjustSlider(ui.cylinder,-0.25)); ui['cyl-plus'].addEventListener('click',()=>adjustSlider(ui.cylinder,0.25));
+ui.bestPossibleToggle.addEventListener('input', updateAndRedraw);
+ui.rulerToggle.addEventListener('input', updateAndRedraw);
+document.querySelectorAll('input[name="lensSide"]').forEach(r => r.addEventListener('input', updateAndRedraw));
+controls.forEach(el=> el.addEventListener('input', updateAndRedraw));
+ui['sph-minus'].addEventListener('click',()=>adjustSlider(ui.sphere, -0.25));
+ui['sph-plus'].addEventListener('click',()=>adjustSlider(ui.sphere, 0.25));
+ui['cyl-minus'].addEventListener('click',()=>adjustSlider(ui.cylinder, -0.25));
+ui['cyl-plus'].addEventListener('click',()=>adjustSlider(ui.cylinder, 0.25));
 ui.applyCalBtn.addEventListener('click',()=>{
     const m=parseFloat(ui.measuredMm.value); if(!isFinite(m)||m<=0)return;
     calibrationScale=50/m; ui.scaleValue.textContent=calibrationScale.toFixed(2)+'×'; drawVisualization();
 });
 
-// =========================
-// INIT
-// =========================
 window.addEventListener('load',()=>{setTimeout(()=>{
-    calculateBaseScale(); 
-    setupCanvas(); 
+    calculateBaseScale(); setupCanvas(); 
     ui.progressiveControls.style.display = ui.progressiveToggle.checked ? 'block' : 'none';
-    if (window.innerWidth <= 900) { controlsContainer.classList.add('is-collapsed'); controlsHeader.textContent = 'Show Controls'; }
-    else { controlsContainer.classList.remove('is-collapsed'); }
+    if (window.innerWidth <= 900) controlsContainer.classList.add('is-collapsed');
     updateAndRedraw();
 },50);});
-window.addEventListener('resize',()=>{clearTimeout(resizeTimeout);resizeTimeout=setTimeout(()=>{
-    setupCanvas();
-    if (window.innerWidth <= 900) {
-        if (!controlsContainer.classList.contains('is-collapsed')) { controlsHeader.textContent = 'Hide Controls'; }
-        else { controlsHeader.textContent = 'Show Controls'; }
-    }
-    drawVisualization();
-},100);});
-let resizeTimeout;
+window.addEventListener('resize',()=>{setupCanvas(); drawVisualization();});
 
 </script>
 </body>
