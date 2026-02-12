@@ -3,64 +3,842 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lens RX Simulator v54.4</title>
+    <title>Lens RX Simulator v55.0</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #1e1e24; --surface-color: #2a2a30; --text-color: #e0e0e0;
-            --primary-color: #00bcd4; --border-color: #444; --metric-value-color: #ffffff;
-            --zone-blue:   rgba(0, 191, 255, 0.35); --zone-green:  rgba(57, 255, 20, 0.28);
-            --zone-yellow: rgba(255, 255, 0, 0.22); --zone-orange: rgba(255, 165, 0, 0.20);
-            --zone-red:    rgba(255, 0, 0, 0.18);
+            --bg-color: #13131a; --surface-color: #1c1c26; --surface-alt: #22222e;
+            --text-color: #d8d8e4; --text-muted: #8888a0; --text-dim: #5a5a72;
+            --primary-color: #00d4aa; --primary-glow: rgba(0, 212, 170, 0.15);
+            --accent-warm: #ff8c42; --accent-danger: #ff4466;
+            --border-color: rgba(255,255,255,0.06); --border-hover: rgba(255,255,255,0.12);
+            --radius: 10px; --radius-lg: 14px;
         }
+        * { box-sizing: border-box; }
         html, body { background-color: var(--bg-color); overscroll-behavior: none; height: 100%; margin: 0; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
             display: flex; flex-direction: column; color: var(--text-color); -webkit-font-smoothing: antialiased;
         }
-        h1 { font-weight: 300; letter-spacing: 1px; color: var(--primary-color); text-align: center; padding: 0.5em 1em 0; }
+
+        .app-header {
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            padding: 14px 20px 6px;
+        }
+        .app-header h1 {
+            font-weight: 300; font-size: 1.3em; letter-spacing: 2px; color: var(--primary-color);
+            margin: 0; text-transform: uppercase;
+        }
+        .app-header .version-tag {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.6em; color: var(--text-dim);
+            background: var(--surface-alt); padding: 2px 8px; border-radius: 20px;
+        }
+
         .main-container {
             display: flex; justify-content: center; align-items: flex-start;
-            gap: 2em; width: 100%; max-width: 1200px; padding: 1em; box-sizing: border-box;
+            gap: 1.5em; width: 100%; max-width: 1300px; padding: 0.8em 1em 1em;
             flex-grow: 1; margin: 0 auto;
         }
+
         .controls {
-            background-color: var(--surface-color); padding: 1.5em; border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3); width: 360px;
-            border: 1px solid var(--border-color); flex-shrink: 0;
+            background-color: var(--surface-color); padding: 0; border-radius: var(--radius-lg);
+            box-shadow: 0 4px 30px rgba(0,0,0,0.4); width: 380px;
+            border: 1px solid var(--border-color); flex-shrink: 0; overflow: hidden;
         }
-        .input-group { margin-bottom: 1.5em; }
+        .controls-header {
+            display: none; text-align: center; padding: 14px; cursor: pointer;
+            background: var(--surface-alt); font-weight: 500; font-size: 0.85em;
+            letter-spacing: 0.5px; color: var(--primary-color); text-transform: uppercase;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .controls-body { padding: 1.2em 1.4em 1.4em; }
+        .section-label {
+            display: block; margin-bottom: 0.5em; font-weight: 600; font-size: 0.7em;
+            color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.2px;
+        }
+        .input-group { margin-bottom: 1.1em; }
         .input-group label {
-            display: block; margin-bottom: 0.6em; font-weight: 500; font-size: 0.9em;
-            color: #aaa; text-transform: uppercase; letter-spacing: 0.5px;
+            display: block; margin-bottom: 0.45em; font-weight: 500; font-size: 0.8em;
+            color: var(--text-muted); letter-spacing: 0.3px;
         }
-        .slider-group { display: flex; align-items: center; gap: 0.5em; }
+        .slider-group { display: flex; align-items: center; gap: 6px; }
         .slider-group input[type="range"] {
             flex-grow: 1; -webkit-appearance: none; appearance: none;
-            height: 8px; background: #444; border-radius: 5px; outline: none; padding: 0; margin: 0;
+            height: 6px; background: var(--surface-alt); border-radius: 3px; outline: none;
         }
         .slider-group input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none; appearance: none; width: 22px; height: 22px;
+            -webkit-appearance: none; width: 20px; height: 20px;
             background: var(--primary-color); cursor: pointer; border-radius: 50%;
+            box-shadow: 0 0 8px rgba(0,212,170,0.3);
+        }
+        .slider-group span {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.9em; font-weight: 500;
+            color: #fff; min-width: 58px; text-align: right;
         }
         .precision-btn {
-            background: #444; border: 1px solid var(--border-color); color: var(--text-color);
-            width: 30px; height: 30px; border-radius: 50%; font-size: 1.4em;
-            line-height: 28px; text-align: center; cursor: pointer; user-select: none; flex-shrink: 0;
+            background: var(--surface-alt); border: 1px solid var(--border-color); color: var(--text-color);
+            width: 28px; height: 28px; border-radius: 50%; font-size: 1.2em;
+            line-height: 26px; text-align: center; cursor: pointer; user-select: none; flex-shrink: 0;
+            transition: background 0.15s, border-color 0.15s;
         }
-        .slider-group span { font-size: 1.1em; font-weight: bold; color: #fff; min-width: 60px; text-align: right; }
-        .cal-row { display: flex; align-items: center; gap: 0.5em; }
-        .cal-row input[type="number"] { width: 4em; background: #1a1a1f; color: #fff; border: 1px solid #555; border-radius: 6px; padding: 0.4em 0.5em; font-size: 0.9em; text-align: right; }
-        .cal-row button { background: var(--primary-color); color: #000; border: 0; border-radius: 6px; font-size: 0.8em; font-weight: 600; padding: 0.4em 0.6em; cursor: pointer; }
-        .calibration-hint { color: #777; font-size: 0.7em; line-height: 1.3em; margin-top: 0.4em; }
-        .scale-readout { color: #aaa; font-size: 0.8em; margin-top: 0.4em; font-family: monospace; }
-        .toggle-row, .lens-side-row { display: flex; align-items: center; gap: 1em; font-size: 0.9em; color: #ddd; }
-        .toggle-row input[type="checkbox"], .lens-side-row input[type="radio"] { accent-color: var(--primary-color); }
-        #progressiveControls { display: none; border-top: 1px solid var(--border-color); margin-top: 1.5em; padding-top: 1.5em;}
-        
-        .visualization-area { display: flex; flex-direction: column; align-items: center; gap: 1.5em; flex-grow: 1; width: 100%; }
+        .precision-btn:hover { background: var(--border-hover); border-color: var(--primary-color); }
+        .precision-btn:active { background: var(--primary-glow); }
+
+        .lens-mode-selector {
+            display: flex; gap: 0; border-radius: var(--radius); overflow: hidden;
+            border: 1px solid var(--border-color); margin-bottom: 1em;
+        }
+        .lens-mode-btn {
+            flex: 1; padding: 10px 6px; background: var(--surface-alt); border: none;
+            color: var(--text-muted); font-family: 'DM Sans', sans-serif; font-size: 0.72em;
+            font-weight: 500; cursor: pointer; transition: all 0.2s; text-align: center;
+            letter-spacing: 0.3px; border-right: 1px solid var(--border-color);
+        }
+        .lens-mode-btn:last-child { border-right: none; }
+        .lens-mode-btn:hover { background: rgba(0,212,170,0.05); color: var(--text-color); }
+        .lens-mode-btn.active {
+            background: var(--primary-glow); color: var(--primary-color); font-weight: 600;
+            box-shadow: inset 0 -2px 0 var(--primary-color);
+        }
+
+        .config-row { display: flex; align-items: center; gap: 8px; font-size: 0.82em; color: var(--text-color); margin-bottom: 0.5em; }
+        .config-row input[type="checkbox"], .config-row input[type="radio"] { accent-color: var(--primary-color); }
+        .config-row label { cursor: pointer; display: flex; align-items: center; gap: 6px; }
+
+        .cal-row { display: flex; align-items: center; gap: 6px; }
+        .cal-row input[type="number"] {
+            width: 4em; background: var(--bg-color); color: #fff; border: 1px solid var(--border-color);
+            border-radius: 6px; padding: 5px 6px; font-size: 0.85em; text-align: right;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .cal-row button {
+            background: var(--primary-color); color: #000; border: 0; border-radius: 6px;
+            font-size: 0.75em; font-weight: 600; padding: 6px 10px; cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .scale-readout { color: var(--text-dim); font-size: 0.75em; margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+        .divider { border: none; border-top: 1px solid var(--border-color); margin: 1.2em 0; }
+        #progressiveAddGroup { display: none; }
+
+        .visualization-area { display: flex; flex-direction: column; align-items: center; gap: 1.2em; flex-grow: 1; width: 100%; }
         .canvas-wrapper {
             position: relative; width: 100%; max-width: 80vh;
             flex-grow: 1; aspect-ratio: 1 / 1;
+            background-color: var(--surface-color); border-radius: var(--radius-lg); overflow: hidden;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.4); border: 1px solid var(--border-color);
+        }
+        #lensCanvas { width: 100%; height: 100%; display: block; }
+
+        .distance-legend {
+            position: absolute; bottom: 12px; right: 12px; background: rgba(19,19,26,0.88);
+            backdrop-filter: blur(8px); border: 1px solid var(--border-color);
+            border-radius: var(--radius); padding: 10px 14px; font-size: 0.7em;
+            pointer-events: none; display: none;
+        }
+        .distance-legend.visible { display: block; }
+        .distance-legend h4 { margin: 0 0 6px; font-weight: 600; color: var(--primary-color); font-size: 1em; letter-spacing: 0.5px; }
+        .legend-row { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+        .legend-swatch { width: 14px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+        .legend-label { color: var(--text-muted); font-size: 0.92em; }
+
+        .mode-badge {
+            position: absolute; top: 12px; left: 12px; background: rgba(19,19,26,0.88);
+            backdrop-filter: blur(8px); border: 1px solid var(--border-color);
+            border-radius: 20px; padding: 5px 14px; font-size: 0.72em; font-weight: 600;
+            color: var(--primary-color); letter-spacing: 0.5px; pointer-events: none;
+        }
+
+        .metrics-box {
+            background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: var(--radius-lg);
+            padding: 1.2em; width: 100%; max-width: 80vh;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 1em; position: relative;
+        }
+        .metric {
+            text-align: center; position: relative; cursor: pointer; transition: opacity 0.2s;
+            padding: 8px; border-radius: var(--radius); background: var(--surface-alt);
+        }
+        .metric:hover { background: rgba(0,212,170,0.04); }
+        .metric-label {
+            font-size: 0.68em; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px;
+            margin-bottom: 4px; display: flex; align-items: center; justify-content: center; gap: 5px;
+        }
+        .metric-value { font-family: 'JetBrains Mono', monospace; font-size: 1.1em; font-weight: 600; color: #fff; line-height: 1.3em; }
+        .metric-sub { font-size: 0.65em; color: var(--text-dim); margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+        .info-icon {
+            font-size: 0.75em; color: var(--primary-color); border: 1px solid var(--primary-color);
+            border-radius: 50%; width: 13px; height: 13px; line-height: 11px; text-align: center; display: inline-block;
+        }
+
+        .risk-popup {
+            display: none; position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%);
+            width: 340px; background: rgba(28, 28, 38, 0.98); border: 1px solid var(--primary-color);
+            border-radius: var(--radius-lg); padding: 18px; box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            z-index: 100; backdrop-filter: blur(12px); text-align: left;
+        }
+        .risk-popup.active { display: block; }
+        .risk-popup h4 { margin: 0 0 10px 0; color: var(--primary-color); font-size: 0.9em; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 6px; }
+        .risk-scale { font-size: 0.72em; margin: 10px 0; display: flex; flex-direction: column; gap: 2px; }
+        .band-item {
+            display: flex; justify-content: space-between; padding: 3px 8px; border-radius: 4px;
+            color: var(--text-dim); font-family: 'JetBrains Mono', monospace; font-size: 0.92em;
+        }
+        .band-item.active { background: var(--primary-color); color: #000; font-weight: bold; }
+        .band-item.best { border: 1px dashed var(--primary-color); color: var(--primary-color); }
+        .driver-list { margin-top: 12px; }
+        .driver-list h5 { font-size: 0.7em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 6px 0; letter-spacing: 0.5px; }
+        .driver-tag {
+            display: inline-block; font-size: 0.65em; background: var(--surface-alt);
+            padding: 3px 8px; border-radius: 12px; margin: 0 4px 4px 0; color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+        .best-comparison {
+            margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06);
+            font-size: 0.72em; color: var(--primary-color); font-style: italic;
+        }
+        .popup-arrow {
+            position: absolute; bottom: -8px; left: 50%; margin-left: -8px;
+            width: 0; height: 0; border-left: 8px solid transparent;
+            border-right: 8px solid transparent; border-top: 8px solid var(--primary-color);
+        }
+
+        .distance-info-bar {
+            background: var(--surface-color); border: 1px solid var(--border-color); border-radius: var(--radius-lg);
+            padding: 14px 18px; width: 100%; max-width: 80vh; display: none;
+        }
+        .distance-info-bar.visible { display: block; }
+        .distance-info-bar h4 {
+            font-size: 0.72em; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);
+            margin: 0 0 8px; font-weight: 600;
+        }
+        .dist-zones { display: flex; gap: 6px; flex-wrap: wrap; }
+        .dist-zone-chip {
+            display: flex; align-items: center; gap: 6px; padding: 5px 12px;
+            background: var(--surface-alt); border-radius: 20px; font-size: 0.78em;
+            border: 1px solid var(--border-color);
+        }
+        .dist-zone-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .dist-zone-label { color: var(--text-color); font-weight: 500; }
+        .dist-zone-range { color: var(--text-dim); font-family: 'JetBrains Mono', monospace; font-size: 0.9em; }
+
+        .hd-info-callout {
+            display: none; background: rgba(0,212,170,0.06); border: 1px solid rgba(0,212,170,0.2);
+            border-radius: var(--radius); padding: 10px 14px; margin-top: 8px; font-size: 0.75em;
+            color: var(--text-muted); line-height: 1.5;
+        }
+        .hd-info-callout.visible { display: block; }
+        .hd-info-callout strong { color: var(--primary-color); }
+
+        @media (max-width: 900px) {
+            .main-container { flex-direction: column-reverse; padding-bottom: 80px; }
+            .controls {
+                position: fixed; bottom: 10px; left: 10px; right: 10px; width: auto; z-index: 10;
+                background: rgba(28, 28, 38, 0.92); backdrop-filter: blur(12px); max-height: 80vh;
+            }
+            .controls-header { display: block; }
+            .controls.is-collapsed .controls-body { display: none; }
+            .controls-body { padding: 1.2em 1.4em; max-height: 60vh; overflow-y: auto; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-header">
+        <h1>Lens RX Simulator</h1>
+        <span class="version-tag">v55.0</span>
+    </div>
+    <div class="main-container">
+        <div class="controls is-collapsed">
+            <div class="controls-header">Show Controls</div>
+            <div class="controls-body">
+                <span class="section-label">Prescription</span>
+                <div class="input-group"><label>Spherical Power (SPH)</label><div class="slider-group"><div class="precision-btn" id="sph-minus">&minus;</div><input type="range" id="sphere" min="-15" max="10" value="-10.00" step="0.25"><div class="precision-btn" id="sph-plus">+</div><span id="sphereValue">-10.00</span></div></div>
+                <div class="input-group"><label>Cylindrical Power (CYL)</label><div class="slider-group"><div class="precision-btn" id="cyl-minus">&minus;</div><input type="range" id="cylinder" min="-6" max="6" value="4.50" step="0.25"><div class="precision-btn" id="cyl-plus">+</div><span id="cylinderValue">4.50</span></div></div>
+                <div class="input-group"><label>Axis</label><div class="slider-group"><input type="range" id="axis" min="0" max="180" value="105" step="1"><span id="axisValue">105&deg;</span></div></div>
+
+                <hr class="divider">
+                <span class="section-label">Lens Configuration</span>
+                <div class="input-group"><label>Lens Material</label><div class="slider-group"><input type="range" id="materialSlider" min="0" max="4" value="3"><span id="materialName">1.67 HI</span></div></div>
+                <div class="input-group"><label>Decentration (D_mm)</label><div class="slider-group"><input type="range" id="decentration" min="15" max="50" value="32.0" step="0.5"><span id="decentrationValue">32.0</span></div></div>
+
+                <hr class="divider">
+                <span class="section-label">Lens Type</span>
+                <div class="lens-mode-selector">
+                    <button class="lens-mode-btn active" data-mode="sv">Single Vision</button>
+                    <button class="lens-mode-btn" data-mode="progressive">Progressive</button>
+                    <button class="lens-mode-btn" data-mode="hd-multi">HD Multi-Func</button>
+                </div>
+                <div id="progressiveAddGroup">
+                    <div class="input-group"><label>ADD Power</label><div class="slider-group"><input type="range" id="addPower" min="0.75" max="3.50" value="2.00" step="0.25"><span id="addPowerValue">+2.00</span></div></div>
+                </div>
+                <div class="hd-info-callout" id="hdInfoCallout">
+                    <strong>HD Digital Multi-Functional</strong> &mdash; Camber&trade; tech provides a dramatically wider intermediate &amp; near corridor (14&Prime;&ndash;6ft), with minimal peripheral swim. Max distance ~13ft. Ideal for desk/computer work, crafts, and reading.
+                </div>
+
+                <hr class="divider">
+                <span class="section-label">Display Options</span>
+                <div class="config-row"><label><input type="radio" name="lensSide" id="lensRight" value="R" checked> Right Eye (OD)</label></div>
+                <div class="config-row"><label><input type="radio" name="lensSide" id="lensLeft" value="L"> Left Eye (OS)</label></div>
+                <div class="config-row" style="margin-top:6px;"><label><input type="checkbox" id="distanceOverlayToggle" checked> Distance Range Overlay</label></div>
+                <div class="config-row"><label><input type="checkbox" id="bestPossibleToggle"> Show &ldquo;Best Case&rdquo; Comparison</label></div>
+                <div class="config-row"><label><input type="checkbox" id="rulerToggle"> Show Seg Height Ruler</label></div>
+
+                <hr class="divider">
+                <span class="section-label">Screen Calibration</span>
+                <div class="cal-row"><input type="number" id="measuredMm" value="36" min="10" max="100" step="0.1"><span style="font-size:0.8em;color:var(--text-dim);">measured mm</span><button id="applyCalBtn">Apply</button></div>
+                <div class="scale-readout">Scale: <span id="scaleValue">1.00&times;</span></div>
+            </div>
+        </div>
+        
+        <div class="visualization-area">
+            <div class="canvas-wrapper">
+                <canvas id="lensCanvas"></canvas>
+                <div class="mode-badge" id="modeBadge">Single Vision</div>
+                <div class="distance-legend" id="distanceLegend">
+                    <h4>Effective Range</h4>
+                    <div id="legendRows"></div>
+                </div>
+            </div>
+            <div class="metrics-box">
+                <div class="metric"><div class="metric-label">Comfort Zone</div><div class="metric-value" id="clarityDiameterValue">-- mm</div></div>
+                <div class="metric" id="riskMetricBtn">
+                    <div class="metric-label">Comfort Risk <span class="info-icon">?</span></div>
+                    <div class="metric-value" id="riskValue">--</div>
+                    <div class="metric-sub" id="riskConfidence">Confidence: --</div>
+                    <div class="risk-popup" id="riskPopup">
+                        <h4>Optical Comfort Risk</h4>
+                        <div class="risk-scale" id="riskScaleContainer"></div>
+                        <div class="driver-list" id="driverList"></div>
+                        <div class="best-comparison" id="bestCompareLine" style="display:none;"></div>
+                        <div class="popup-arrow"></div>
+                    </div>
+                </div>
+                <div class="metric"><div class="metric-label">Center Thickness</div><div class="metric-value" id="centerThicknessValue">-- mm</div></div>
+                <div class="metric"><div class="metric-label">Est. Edge Thickness</div><div class="metric-value" id="edgeThicknessValue">-- mm</div></div>
+            </div>
+            <div class="distance-info-bar" id="distanceInfoBar">
+                <h4>Viewing Distance Zones</h4>
+                <div class="dist-zones" id="distZoneChips"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+// =========================
+// SETUP
+// =========================
+const ui = {};
+['sphere','sphereValue','cylinder','cylinderValue','axis','axisValue','materialSlider','materialName',
+ 'decentration','decentrationValue','clarityDiameterValue','riskValue','riskConfidence','centerThicknessValue','edgeThicknessValue',
+ 'sph-minus','sph-plus','cyl-minus','cyl-plus','measuredMm','applyCalBtn','scaleValue',
+ 'addPower','addPowerValue','lensRight','lensLeft','rulerToggle','bestPossibleToggle',
+ 'distanceOverlayToggle','progressiveAddGroup','modeBadge','distanceLegend','legendRows',
+ 'distanceInfoBar','distZoneChips','hdInfoCallout'].forEach(id => ui[id] = document.getElementById(id));
+
+const canvas = document.getElementById('lensCanvas');
+const ctx = canvas.getContext('2d', { willReadFrequently: true });
+const offscreenCanvas = document.createElement('canvas');
+const offscreenCtx = offscreenCanvas.getContext('2d', { willReadFrequently: true });
+const controls = document.querySelectorAll('.controls input');
+const controlsContainer = document.querySelector('.controls');
+const controlsHeader = document.querySelector('.controls-header');
+
+let dpr = 1, basePxPerMmPhysical = 4, calibrationScale = 1.0;
+let currentLensMode = 'sv';
+
+const MATERIALS = {
+  "1.50": { name: "CR-39 (1.50)",     n: 1.50, centerThickness: 1.9, minEdge: 2.0, factor: 0.8 },
+  "1.59": { name: "Polycarb (1.59)",  n: 1.59, centerThickness: 1.6, minEdge: 1.5, factor: 1.2 },
+  "1.60": { name: "Hi-Index (1.60)",  n: 1.60, centerThickness: 1.1, minEdge: 1.5, factor: 1.8 },
+  "1.67": { name: "Hi-Index (1.67)",  n: 1.67, centerThickness: 1.1, minEdge: 1.5, factor: 2.5 },
+  "1.74": { name: "Hi-Index (1.74)",  n: 1.74, centerThickness: 1.1, minEdge: 1.5, factor: 3.5 }
+};
+const MATERIAL_KEYS = Object.keys(MATERIALS);
+
+const RISK_BANDS = [
+    { range: [0,5], label: "Near-Perfect" },     { range: [6,12], label: "Excellent" },
+    { range: [13,20], label: "Very Good" },       { range: [21,30], label: "Good" },
+    { range: [31,40], label: "Mostly Fine" },     { range: [41,50], label: "Borderline" },
+    { range: [51,60], label: "Challenging" },     { range: [61,70], label: "High Risk" },
+    { range: [71,82], label: "Very High Risk" },  { range: [83,92], label: "Severe Risk" },
+    { range: [93,100], label: "Fishbowl Territory" }
+];
+
+const PROGRESSIVE_DISTANCE_ZONES = [
+    { label: "Near (14\u201318\u2033)",          color: "#00bfff" },
+    { label: "Intermediate (19\u201336\u2033)",  color: "#39ff14" },
+    { label: "Mid-Range (3\u20138 ft)",          color: "#ffd700" },
+    { label: "Distance (8 ft+)",                 color: "#ff6644" }
+];
+const HD_MULTI_DISTANCE_ZONES = [
+    { label: "Near (14\u201318\u2033)",          color: "#00bfff" },
+    { label: "Intermediate (19\u201348\u2033)",  color: "#39ff14" },
+    { label: "Desk (4\u20136 ft)",               color: "#ffd700" },
+    { label: "Room (6\u201313 ft max)",          color: "#ff8c42" }
+];
+
+// =========================
+// UTILITIES
+// =========================
+function lerp(a,b,t){return a+(b-a)*t;}
+function clamp(v,mn,mx){return Math.max(mn,Math.min(mx,v));}
+function clamp01(v){return clamp(v,0,1);}
+function getAnisotropy(cyl){return Math.min(1+0.12*Math.abs(cyl),1.6);}
+function normalizeRx(sph,cyl,axis){if(cyl>0)return{sph:sph+cyl,cyl:-cyl,axis:(axis+90)%180};return{sph,cyl,axis};}
+function getBandData(score){return RISK_BANDS.find(b=>score>=b.range[0]&&score<=b.range[1])||RISK_BANDS[RISK_BANDS.length-1];}
+
+function calculateBaseScale(){
+    const p=document.createElement('div');p.style.cssText='position:absolute;top:-999px;width:1mm;';
+    document.body.appendChild(p);dpr=window.devicePixelRatio||1;
+    basePxPerMmPhysical=(p.getBoundingClientRect().width||3.78)*dpr;
+    document.body.removeChild(p);
+}
+function getPxPerMm(){return basePxPerMmPhysical*calibrationScale;}
+function setupCanvas(){
+    const r=canvas.getBoundingClientRect();dpr=window.devicePixelRatio||1;
+    canvas.width=Math.round(r.width*dpr);canvas.height=Math.round(r.height*dpr);
+    canvas.logicalWidth=canvas.width;canvas.logicalHeight=canvas.height;
+    offscreenCanvas.width=canvas.width;offscreenCanvas.height=canvas.height;
+}
+
+// =========================
+// MATH ENGINES
+// =========================
+function calculateThicknesses(p){
+    const D_mm=p.decentration;
+    const maxMP=Math.abs(p.sph)>Math.abs(p.sph+p.cyl)?p.sph:(p.sph+p.cyl);
+    const rf=2000*(p.material.n-1);
+    const sag=(D_mm*D_mm*Math.abs(maxMP))/rf;
+    let cT,eT;
+    if(maxMP>0){eT=p.material.minEdge;cT=eT+sag;}else{cT=p.material.centerThickness;eT=cT+sag;}
+    return{centerT:cT,edgeT:eT};
+}
+
+function calculateRisk(p){
+    const SE=p.sph+p.cyl/2,absSE=Math.abs(SE),absCyl=Math.abs(p.cyl);
+    const decOver=Math.max(0,p.decentration-24);
+    const seN=1-Math.exp(-absSE/8.0),cylN=1-Math.exp(-absCyl/3.0);
+    const decN=1-Math.exp(-decOver/14.0),plusN=clamp01(SE/9);
+    let progN=0;
+    if(p.mode==='progressive')progN=1;
+    else if(p.mode==='hd-multi')progN=0.35;
+    const idxMit=clamp01((p.material.n-1.50)/0.24);
+    const c1=seN*decN,c2=cylN*decN,c3=seN*cylN*0.7;
+    let base=(0.44*seN)+(0.20*cylN)+(0.20*decN)+(0.10*plusN)+(0.15*progN);
+    let inter=(0.22*c1)+(0.12*c2)+(0.10*c3);
+    const matBen=idxMit*0.15*(seN+0.5);
+    let s01=clamp01(base+inter-matBen);
+    const rs=Math.round(100*Math.pow(s01,1.05));
+    const mp=1-Math.abs((rs/100)-0.5)*2;
+    const conf=Math.round(100*clamp(0.92-0.18*mp-0.10*decN,0.2,0.95));
+    const dr=[];
+    if(absSE>5)dr.push("High SE Rx");
+    if(absCyl>2.5)dr.push("Significant CYL");
+    if(p.decentration>36)dr.push("Significant Decentration");
+    if(p.mode==='progressive')dr.push("Progressive Overlay");
+    if(p.mode==='hd-multi')dr.push("HD Multi-Func (wider corridor)");
+    if(idxMit>0.4)dr.push("Index Mitigation Active");
+    return{riskScore:rs,confidence:conf,drivers:dr};
+}
+
+function calculateBestCase(p){
+    const n=normalizeRx(p.sph,p.cyl,p.axis);
+    const SE=p.sph+p.cyl/2,absSE=Math.abs(SE);
+    const tMat=(absSE>4.5||p.decentration>38)?MATERIALS["1.74"]:MATERIALS["1.60"];
+    const tDec=31;
+    const bP={...n,decentration:tDec,material:tMat,mode:p.mode};
+    const br=calculateRisk(bP).riskScore;
+    const ab=clamp01(absSE/10)*0.08;
+    const bs=Math.round(br*(1-ab));
+    return{score:bs,band:getBandData(bs).label,mat:tMat.name,dec:tDec};
+}
+
+function calculateSVMetrics(p){
+    const bP=Math.abs(p.sph),tP=Math.abs(p.sph+p.cyl),dR=p.material.factor;
+    const mc=48;
+    const cds=Math.max(10,mc-Math.pow(bP,1.15)*(4.5/dR));
+    const cdt=Math.max(10,mc-Math.pow(tP,1.15)*(4.5/dR));
+    const{centerT,edgeT}=calculateThicknesses(p);
+    const risk=calculateRisk(p);
+    return{cds,cdt,dS:risk.riskScore,edgeT,centerT,warp:-p.sph*0.015*(1+(2.0/dR)),twist:-p.cyl*0.08*(1+(2.0/dR))};
+}
+
+// =========================
+// UI UPDATES
+// =========================
+function updateRiskUI(p){
+    const cur=calculateRisk(p);const band=getBandData(cur.riskScore);
+    ui.riskValue.textContent=band.label+" ("+cur.riskScore+")";
+    ui.riskConfidence.textContent="Confidence: "+cur.confidence+"%";
+    let sh="",bc=null;
+    if(ui.bestPossibleToggle.checked){
+        bc=calculateBestCase(p);
+        document.getElementById('bestCompareLine').style.display='block';
+        document.getElementById('bestCompareLine').textContent="Best Case ("+bc.mat+" @ "+bc.dec+"mm): "+bc.band+" ("+bc.score+")";
+    }else{document.getElementById('bestCompareLine').style.display='none';}
+    RISK_BANDS.forEach(b=>{
+        const ia=b.label===band.label,ib=bc&&b.label===bc.band;
+        sh+='<div class="band-item '+(ia?'active ':' ')+(ib?'best':'')+'"><span>'+b.label+'</span><span>'+b.range[0]+'\u2013'+b.range[1]+'</span></div>';
+    });
+    document.getElementById('riskScaleContainer').innerHTML=sh;
+    let dh="<h5>Risk Factors & Mitigation</h5>";
+    if(!cur.drivers.length)dh+="<div class='driver-tag'>Standard Geometry</div>";
+    cur.drivers.forEach(d=>dh+="<div class='driver-tag'>"+d+"</div>");
+    document.getElementById('driverList').innerHTML=dh;
+}
+
+function updateDistanceUI(p){
+    const show=p.showDistOverlay&&p.mode!=='sv';
+    ui.distanceLegend.classList.toggle('visible',show);
+    ui.distanceInfoBar.classList.toggle('visible',show);
+    if(!show)return;
+    const zones=p.mode==='hd-multi'?HD_MULTI_DISTANCE_ZONES:PROGRESSIVE_DISTANCE_ZONES;
+    let lh='',ch='';
+    zones.forEach(z=>{
+        lh+='<div class="legend-row"><div class="legend-swatch" style="background:'+z.color+'"></div><div class="legend-label">'+z.label+'</div></div>';
+        const m=z.label.match(/\((.+)\)/);
+        ch+='<div class="dist-zone-chip"><div class="dist-zone-dot" style="background:'+z.color+'"></div><span class="dist-zone-label">'+z.label.split('(')[0].trim()+'</span><span class="dist-zone-range">'+(m?m[1]:'')+'</span></div>';
+    });
+    ui.legendRows.innerHTML=lh;
+    ui.distZoneChips.innerHTML=ch;
+}
+
+function drawVisualization(){
+    const mk=MATERIAL_KEYS[parseInt(ui.materialSlider.value)];
+    const rs=parseFloat(ui.sphere.value)||0,rc=parseFloat(ui.cylinder.value)||0,ra=parseInt(ui.axis.value)||0;
+    const n=normalizeRx(rs,rc,ra);
+    const p={
+        sph:n.sph,cyl:n.cyl,axis:n.axis,
+        decentration:parseFloat(ui.decentration.value)||0,
+        material:MATERIALS[mk],mode:currentLensMode,
+        showRuler:ui.rulerToggle.checked,showDistOverlay:ui.distanceOverlayToggle.checked,
+        side:document.querySelector('input[name="lensSide"]:checked').value,
+        add:(currentLensMode!=='sv'&&ui.addPower)?parseFloat(ui.addPower.value):0
+    };
+    const m=calculateSVMetrics(p);
+    ui.clarityDiameterValue.textContent=Math.min(m.cds,m.cdt).toFixed(1)+" mm";
+    ui.centerThicknessValue.textContent=m.centerT.toFixed(1)+" mm";
+    ui.edgeThicknessValue.textContent=m.edgeT.toFixed(1)+" mm";
+    const ml={sv:"Single Vision",progressive:"Progressive","hd-multi":"HD Multi-Functional"};
+    ui.modeBadge.textContent=ml[currentLensMode];
+    updateRiskUI(p);
+    createWarpBackground(offscreenCtx,canvas.width,canvas.height,p,m);
+    drawRayMappedView(p,m);
+    drawClinicalOverlay(p,m);
+    updateDistanceUI(p);
+}
+
+// =========================
+// CANVAS CORE
+// =========================
+function createWarpBackground(oCtx,w,h,p,m){
+    oCtx.clearRect(0,0,w,h);
+    if(p.mode==='progressive')drawProgressiveHeatMap(oCtx,w,h,p,m);
+    else if(p.mode==='hd-multi')drawHDMultiFuncHeatMap(oCtx,w,h,p,m);
+    else drawAdvancedSVHeatmap(oCtx,w,h,p,m);
+}
+
+function drawAdvancedSVHeatmap(c2,w,h,p,met){
+    const cx=w/2,cy=h/2,pm=getPxPerMm();
+    const mr=Math.sqrt(w*w+h*h)/2;
+    const cr=Math.min(met.cds,met.cdt)/2*pm;
+    const ip=(p.sph+p.cyl/2)>0;
+    c2.save();c2.translate(cx,cy);c2.rotate(p.axis*Math.PI/180);
+    c2.scale(getAnisotropy(p.cyl),1/getAnisotropy(p.cyl));
+    const g=c2.createRadialGradient(0,0,cr*(ip?0.45:0.25),0,0,mr);
+    if(ip){g.addColorStop(0,'rgba(255,100,0,1)');g.addColorStop(0.3,'rgba(0,191,255,1)');g.addColorStop(cr/mr,'rgba(57,255,20,1)');g.addColorStop(1,'rgba(255,0,0,1)');}
+    else{g.addColorStop(0,'rgba(0,191,255,1)');g.addColorStop(cr/mr,'rgba(57,255,20,1)');g.addColorStop((cr*1.4)/mr,'rgba(255,255,0,1)');g.addColorStop(1,'rgba(255,0,0,1)');}
+    c2.fillStyle=g;c2.fillRect(-mr*2,-mr*2,mr*4,mr*4);
+    c2.restore();
+}
+
+// Traditional Progressive — narrow corridor
+function drawProgressiveHeatMap(c2,w,h,p,met){
+    const pm=getPxPerMm(),cx=w/2,cy=h/2;
+    const dMm=11,iMm=3,ns=(p.side==='R'?-1:1);
+    const dPx=dMm*pm,iPx=iMm*pm;
+    const rs=clamp(met.dS/100,0,1);
+    const bwt=lerp(12,5,rs),bwb=lerp(7,4,rs);
+    function cX(y){const t=clamp((y-cy)/dPx,0,1);return cx+ns*iPx*(t*(1-0.3*t)-0.15*Math.pow(t,3));}
+    function hW(y){const t=clamp((y-cy)/dPx,0,1);return(lerp(bwt,bwb,t)*(1-0.6*Math.sin(Math.PI*t)))*pm;}
+    c2.fillStyle='rgba(255,0,0,1)';c2.fillRect(0,0,w,h);
+    const id=c2.getImageData(0,0,w,h),d=id.data;
+    for(let y=0;y<h;y++){for(let x=0;x<w;x++){
+        const dx=x-cx,dy=y-cy;
+        const ccX=cX(y),hw=hW(y)||1;
+        const dfc=Math.abs(x-ccX)/hw;
+        let vp=0;
+        if(y<cy-6*pm)vp=((cy-6*pm)-y)/(6*pm);
+        if(y>cy+dPx+4*pm)vp=(y-(cy+dPx+4*pm))/(6*pm);
+        const ap=clamp(distortionScoreAt(dx,dy,w,h,p,met)*3.0,0,5);
+        const isn=(x-cx)*ns>0;
+        const nb=clamp(isn?Math.abs(x-cx)/(10*pm):0,0,1.2)*clamp((y-cy)/dPx,0,1);
+        let cs=dfc*(1.2+rs*2.0)+ap*(0.8+nb)+clamp(vp,0,2)*0.7;
+        cs*=(0.6+0.4*clamp((y-cy)/dPx,0,1));
+        const col=heatColor(clamp(cs/3.5,0,1));
+        const pts=col.match(/\d+/g);
+        const idx=(y*w+x)*4;
+        d[idx]=parseInt(pts[0]);d[idx+1]=parseInt(pts[1]);d[idx+2]=parseInt(pts[2]);d[idx+3]=255;
+    }}
+    c2.putImageData(id,0,0);
+    if(p.showDistOverlay)drawDistanceRangeOverlay(c2,w,h,p,'progressive');
+}
+
+/**
+ * HD Digital Multi-Functional Lens (Camber Technology)
+ * - 14" to 6ft focal length, max room distance ~13ft
+ * - Dramatically wider corridor (~2.5-3x progressive)
+ * - Minimal peripheral swim/warping
+ * - Slight top-edge softness (limited distance vs infinity)
+ */
+function drawHDMultiFuncHeatMap(c2,w,h,p,met){
+    const pm=getPxPerMm(),cx=w/2,cy=h/2;
+    const dMm=15,iMm=1.8,ns=(p.side==='R'?-1:1);
+    const dPx=dMm*pm,iPx=iMm*pm;
+    const rs=clamp(met.dS/100,0,1);
+    const bwt=lerp(24,16,rs),bwm=lerp(20,12,rs),bwb=lerp(18,10,rs);
+
+    function cX(y){const t=clamp((y-cy)/dPx,0,1);return cx+ns*iPx*(t*(1-0.4*t));}
+    function hW(y){
+        const t=clamp((y-cy)/dPx,0,1);
+        const t2m=lerp(bwt,bwm,Math.min(t*2,1));
+        const m2b=lerp(bwm,bwb,Math.max((t-0.5)*2,0));
+        const ww=t<0.5?t2m:m2b;
+        return ww*(1-0.12*Math.sin(Math.PI*t))*pm;
+    }
+
+    c2.fillStyle='rgba(255,0,0,1)';c2.fillRect(0,0,w,h);
+    const id=c2.getImageData(0,0,w,h),d=id.data;
+    for(let y=0;y<h;y++){for(let x=0;x<w;x++){
+        const dx=x-cx,dy=y-cy;
+        const ccX=cX(y),hw=hW(y)||1;
+        const dfc=Math.abs(x-ccX)/hw;
+        let vp=0;
+        // Top: gentle softness — distance limited to ~13ft, not infinity
+        if(y<cy-8*pm){vp=((cy-8*pm)-y)/(14*pm);vp*=0.45;}
+        if(y>cy+dPx+6*pm)vp=(y-(cy+dPx+6*pm))/(10*pm);
+        const ap=clamp(distortionScoreAt(dx,dy,w,h,p,met)*1.2,0,2.5);
+        const isn=(x-cx)*ns>0;
+        const nb=clamp(isn?Math.abs(x-cx)/(18*pm):0,0,0.5)*clamp((y-cy)/dPx,0,1);
+        let cs=dfc*(0.5+rs*0.9)+ap*(0.35+nb*0.4)+clamp(vp,0,1.2)*0.4;
+        cs*=(0.35+0.25*clamp((y-cy)/dPx,0,1));
+        const col=heatColor(clamp(cs/3.5,0,1));
+        const pts=col.match(/\d+/g);
+        const idx=(y*w+x)*4;
+        d[idx]=parseInt(pts[0]);d[idx+1]=parseInt(pts[1]);d[idx+2]=parseInt(pts[2]);d[idx+3]=255;
+    }}
+    c2.putImageData(id,0,0);
+    if(p.showDistOverlay)drawDistanceRangeOverlay(c2,w,h,p,'hd-multi');
+}
+
+function drawDistanceRangeOverlay(c2,w,h,p,type){
+    const pm=getPxPerMm(),cx=w/2,cy=h/2;
+    c2.save();c2.globalCompositeOperation='source-over';
+    let zones;
+    if(type==='progressive'){
+        zones=[
+            {yS:0,yE:cy-6*pm,col:"rgba(255,102,68,0.16)",bdr:"#ff6644",lbl:"DISTANCE  8ft+"},
+            {yS:cy-6*pm,yE:cy+2*pm,col:"rgba(255,215,0,0.12)",bdr:"#ffd700",lbl:"MID-RANGE  3\u20138ft"},
+            {yS:cy+2*pm,yE:cy+10*pm,col:"rgba(57,255,20,0.12)",bdr:"#39ff14",lbl:"INTERMEDIATE  19\u201336\u2033"},
+            {yS:cy+10*pm,yE:h,col:"rgba(0,191,255,0.12)",bdr:"#00bfff",lbl:"NEAR  14\u201318\u2033"},
+        ];
+    }else{
+        zones=[
+            {yS:0,yE:cy-6*pm,col:"rgba(255,140,66,0.16)",bdr:"#ff8c42",lbl:"ROOM  6\u201313ft max"},
+            {yS:cy-6*pm,yE:cy+3*pm,col:"rgba(255,215,0,0.12)",bdr:"#ffd700",lbl:"DESK  4\u20136ft"},
+            {yS:cy+3*pm,yE:cy+12*pm,col:"rgba(57,255,20,0.12)",bdr:"#39ff14",lbl:"INTERMEDIATE  19\u201348\u2033"},
+            {yS:cy+12*pm,yE:h,col:"rgba(0,191,255,0.12)",bdr:"#00bfff",lbl:"NEAR  14\u201318\u2033"},
+        ];
+    }
+    zones.forEach(z=>{
+        c2.fillStyle=z.col;c2.fillRect(0,z.yS,w,z.yE-z.yS);
+        c2.strokeStyle=z.bdr;c2.lineWidth=1.5;c2.globalAlpha=0.45;
+        c2.setLineDash([6,4]);
+        c2.beginPath();c2.moveTo(0,z.yE);c2.lineTo(w,z.yE);c2.stroke();
+        c2.setLineDash([]);c2.globalAlpha=0.6;
+        const ly=(z.yS+z.yE)/2;
+        c2.fillStyle=z.bdr;
+        c2.font='600 '+Math.round(9*dpr)+'px DM Sans,sans-serif';
+        c2.textAlign='right';
+        c2.fillText(z.lbl,w-10*dpr,ly+4*dpr);
+        c2.globalAlpha=1.0;
+    });
+    c2.restore();
+}
+
+function distortionScoreAt(dx,dy,w,h,p,met){
+    const r=Math.sqrt(dx*dx+dy*dy),mr=Math.sqrt(w*w+h*h)/2,rn=r/mr;
+    const th=Math.atan2(dy,dx),ar=(p.axis*Math.PI)/180;
+    const rad=Math.abs(met.warp)*Math.pow(rn,1.6);
+    const nb=(p.side==='R'&&dx>0)||(p.side==='L'&&dx<0)?1.15:0.95;
+    const tw=Math.abs(met.twist)*nb*Math.pow(rn,2.1)*Math.abs(Math.sin(2*(th-ar)));
+    return rad+tw;
+}
+
+function drawRayMappedView(p,met){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(offscreenCanvas,0,0);
+    drawDistortedGrid(ctx,canvas.width,canvas.height,p,met);
+}
+
+function drawDistortedGrid(c2,w,h,p,met){
+    const pm=getPxPerMm(),step=4.0*pm,cx=w/2,cy=h/2;
+    c2.strokeStyle='rgba(0,0,0,0.22)';c2.lineWidth=1.0*dpr;c2.beginPath();
+    const gP=(ox,oy)=>{
+        let dx=ox-cx,dy=oy-cy;
+        const r=Math.sqrt(dx*dx+dy*dy),rn=r/(w/2),th=Math.atan2(dy,dx);
+        let pw=p.sph;
+        if(p.mode!=='sv'&&dy>0)pw+=p.add*clamp(dy/(12*pm),0,1);
+        const mg=1/(1-(pw*0.045*(1.55/p.material.n)));
+        const fr=r*mg*(1+met.warp*2.8*0.18*rn**2);
+        const ta=met.twist*2.8*0.18*rn**2.2*Math.sin(2*(th-p.axis*Math.PI/180));
+        return{x:cx+fr*Math.cos(th-ta),y:cy+fr*Math.sin(th-ta)};
+    };
+    const buf=w*0.6;
+    for(let x=-buf;x<=w+buf;x+=step){for(let y=-buf;y<=h+buf;y+=15){const pt=gP(x,y);if(y===-buf)c2.moveTo(pt.x,pt.y);else c2.lineTo(pt.x,pt.y);}}
+    for(let y=-buf;y<=h+buf;y+=step){for(let x=-buf;x<=w+buf;x+=15){const pt=gP(x,y);if(x===-buf)c2.moveTo(pt.x,pt.y);else c2.lineTo(pt.x,pt.y);}}
+    c2.stroke();
+}
+
+function drawClinicalOverlay(p,met){
+    const w=canvas.logicalWidth,h=canvas.logicalHeight,pm=getPxPerMm();
+    const cx=w/2,cy=h/2;
+    ctx.strokeStyle='rgba(0,0,0,0.45)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(cx-10*dpr,cy);ctx.lineTo(cx+10*dpr,cy);
+    ctx.moveTo(cx,cy-10*dpr);ctx.lineTo(cx,cy+10*dpr);ctx.stroke();
+    if(p.showRuler){
+        ctx.save();ctx.strokeStyle='rgba(0,0,0,0.6)';ctx.fillStyle='rgba(0,0,0,0.6)';
+        ctx.font='500 '+10*dpr+'px JetBrains Mono,monospace';
+        ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx,h);ctx.stroke();
+        for(let i=1;i<65;i++){
+            const ty=cy+(i*pm);if(ty>h)break;
+            const i5=i%5===0,tw=i5?14*dpr:6*dpr;
+            ctx.beginPath();ctx.moveTo(cx-tw/2,ty);ctx.lineTo(cx+tw/2,ty);ctx.stroke();
+            if(i5)ctx.fillText(i.toString(),cx+10*dpr,ty+3*dpr);
+        }
+        ctx.restore();
+    }
+    if(p.mode==='progressive')drawProgressiveMarkers(ctx,cx,cy,pm,p);
+    else if(p.mode==='hd-multi')drawHDMultiMarkers(ctx,cx,cy,pm,p);
+    else{
+        const cr=Math.min(met.cds,met.cdt)/2*pm;
+        const ar=(p.axis*Math.PI)/180,an=getAnisotropy(p.cyl);
+        ctx.lineWidth=2.5;ctx.strokeStyle='rgba(255,255,255,0.55)';
+        ctx.beginPath();ctx.ellipse(cx,cy,cr*an,cr/an,ar,0,2*Math.PI);ctx.stroke();
+    }
+    drawCalibrationBar(pm,w,h,met.edgeT);
+}
+
+function drawProgressiveMarkers(c2,cx,cy,pm,p){
+    const ns=(p.side==='R'?-1:1);
+    const dy2=cy-(4*pm),nx=cx+(3*ns*pm),ny=cy+(17*pm);
+    c2.lineWidth=2.5;c2.strokeStyle='rgba(255,255,255,0.75)';c2.setLineDash([]);
+    c2.beginPath();c2.arc(cx,dy2,4*pm,0,2*Math.PI);c2.stroke();
+    c2.beginPath();c2.arc(nx,ny,4*pm,0,2*Math.PI);c2.stroke();
+    c2.fillStyle='rgba(255,255,255,0.7)';c2.font='600 '+9*dpr+'px DM Sans,sans-serif';c2.textAlign='center';
+    c2.fillText("DIST",cx,dy2-5.5*pm);
+    c2.fillText("NEAR",nx,ny+6.5*pm);
+}
+
+function drawHDMultiMarkers(c2,cx,cy,pm,p){
+    const ns=(p.side==='R'?-1:1);
+    const ry=cy-(6*pm),dy2=cy-pm;
+    const nx=cx+(2*ns*pm),ny=cy+(15*pm);
+    c2.lineWidth=2;c2.strokeStyle='rgba(255,255,255,0.6)';c2.setLineDash([]);
+    // Room zone — wide ellipse
+    c2.beginPath();c2.ellipse(cx,ry,9*pm,3.5*pm,0,0,2*Math.PI);c2.stroke();
+    // Desk zone
+    c2.beginPath();c2.ellipse(cx,dy2,8*pm,3*pm,0,0,2*Math.PI);c2.stroke();
+    // Near — wider than progressive
+    c2.beginPath();c2.arc(nx,ny,6*pm,0,2*Math.PI);c2.stroke();
+    c2.fillStyle='rgba(255,255,255,0.65)';c2.font='600 '+8.5*dpr+'px DM Sans,sans-serif';c2.textAlign='center';
+    c2.fillText("ROOM \u226413ft",cx,ry-4.5*pm);
+    c2.fillText("DESK 4\u20136ft",cx,dy2-4*pm);
+    c2.fillText("NEAR",nx,ny+7.5*pm);
+}
+
+function drawCalibrationBar(pm,w,h,tMm){
+    const bw=50*pm,bh=tMm*pm,m=16*dpr;
+    ctx.fillStyle='rgba(255,255,255,0.8)';ctx.fillRect(m,h-bh-m,bw,bh);
+    ctx.fillStyle='rgba(255,255,255,0.75)';ctx.font='500 '+10*dpr+'px JetBrains Mono,monospace';ctx.textAlign='left';
+    ctx.fillText('50mm',m,h-bh-m-4*dpr);
+    ctx.textAlign='right';ctx.fillText(tMm.toFixed(1)+'mm thick',m+bw,h-bh-m-4*dpr);
+}
+
+function heatColor(t){
+    t=clamp(t,0,1);let r,g,b;
+    if(t<0.25){r=lerp(0,57,t/0.25);g=lerp(191,255,t/0.25);b=lerp(255,20,t/0.25);}
+    else if(t<0.5){r=lerp(57,255,(t-0.25)/0.25);g=255;b=lerp(20,0,(t-0.25)/0.25);}
+    else if(t<0.75){r=255;g=lerp(255,165,(t-0.5)/0.25);b=0;}
+    else{r=255;g=lerp(165,0,(t-0.75)/0.25);b=0;}
+    return 'rgba('+r.toFixed(0)+','+g.toFixed(0)+','+b.toFixed(0)+',1.0)';
+}
+
+// =========================
+// UI HELPERS
+// =========================
+function updateAndRedraw(){
+    ui.sphereValue.textContent=parseFloat(ui.sphere.value).toFixed(2);
+    ui.cylinderValue.textContent=parseFloat(ui.cylinder.value).toFixed(2);
+    ui.axisValue.textContent=ui.axis.value+'\u00B0';
+    ui.decentrationValue.textContent=parseFloat(ui.decentration.value).toFixed(1);
+    ui.materialName.textContent=MATERIALS[MATERIAL_KEYS[parseInt(ui.materialSlider.value)]].name;
+    if(currentLensMode!=='sv'&&ui.addPowerValue)ui.addPowerValue.textContent='+'+parseFloat(ui.addPower.value).toFixed(2);
+    drawVisualization();
+}
+
+function adjustSlider(s,v){
+    s.value=clamp(parseFloat(s.value)+v,parseFloat(s.min),parseFloat(s.max));
+    updateAndRedraw();
+}
+
+function setLensMode(mode){
+    currentLensMode=mode;
+    document.querySelectorAll('.lens-mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
+    ui.progressiveAddGroup.style.display=(mode!=='sv')?'block':'none';
+    ui.hdInfoCallout.classList.toggle('visible',mode==='hd-multi');
+    updateAndRedraw();
+}
+
+// =========================
+// EVENT LISTENERS
+// =========================
+document.querySelectorAll('.lens-mode-btn').forEach(b=>b.addEventListener('click',()=>setLensMode(b.dataset.mode)));
+
+const riskBtn=document.getElementById('riskMetricBtn');
+const riskPopup=document.getElementById('riskPopup');
+riskBtn.addEventListener('click',(e)=>{e.stopPropagation();riskPopup.classList.toggle('active');});
+document.addEventListener('click',()=>riskPopup.classList.remove('active'));
+
+controlsHeader.addEventListener('click',()=>{
+    const ic=controlsContainer.classList.toggle('is-collapsed');
+    controlsHeader.textContent=ic?'Show Controls':'Hide Controls';
+});
+
+controls.forEach(el=>el.addEventListener('input',updateAndRedraw));
+document.querySelectorAll('input[name="lensSide"]').forEach(r=>r.addEventListener('input',updateAndRedraw));
+ui.bestPossibleToggle.addEventListener('input',updateAndRedraw);
+ui.rulerToggle.addEventListener('input',updateAndRedraw);
+ui.distanceOverlayToggle.addEventListener('input',updateAndRedraw);
+
+ui['sph-minus'].addEventListener('click',()=>adjustSlider(ui.sphere,-0.25));
+ui['sph-plus'].addEventListener('click',()=>adjustSlider(ui.sphere,0.25));
+ui['cyl-minus'].addEventListener('click',()=>adjustSlider(ui.cylinder,-0.25));
+ui['cyl-plus'].addEventListener('click',()=>adjustSlider(ui.cylinder,0.25));
+
+ui.applyCalBtn.addEventListener('click',()=>{
+    const m=parseFloat(ui.measuredMm.value);if(!isFinite(m)||m<=0)return;
+    calibrationScale=50/m;ui.scaleValue.textContent=calibrationScale.toFixed(2)+'\u00d7';drawVisualization();
+});
+
+window.addEventListener('load',()=>{setTimeout(()=>{
+    calculateBaseScale();setupCanvas();
+    if(window.innerWidth<=900)controlsContainer.classList.add('is-collapsed');
+    updateAndRedraw();
+},50);});
+window.addEventListener('resize',()=>{setupCanvas();drawVisualization();});
+</script>
+</body>
+</html>
             background-color: var(--surface-color); border-radius: 12px; overflow: hidden;
             box-shadow: 0 8px 24px rgba(0,0,0,0.3); border: 1px solid var(--border-color);
         }
