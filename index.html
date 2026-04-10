@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lens RX Simulator v55.0</title>
+    <title>Lens RX Simulator v56.0</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
@@ -11,7 +11,7 @@
             --bg-color: #13131a; --surface-color: #1c1c26; --surface-alt: #22222e;
             --text-color: #d8d8e4; --text-muted: #8888a0; --text-dim: #5a5a72;
             --primary-color: #00d4aa; --primary-glow: rgba(0, 212, 170, 0.15);
-            --accent-warm: #ff8c42; --accent-danger: #ff4466;
+            --accent-warm: #ff9933; --accent-blue: #5599ff; --accent-danger: #ff4466;
             --border-color: rgba(255,255,255,0.06); --border-hover: rgba(255,255,255,0.12);
             --radius: 10px; --radius-lg: 14px;
         }
@@ -34,6 +34,14 @@
             font-family: 'JetBrains Mono', monospace; font-size: 0.6em; color: var(--text-dim);
             background: var(--surface-alt); padding: 2px 8px; border-radius: 20px;
         }
+        .tutorial-btn {
+            margin-left: auto; background: none; border: 1px solid var(--border-color);
+            color: var(--text-muted); border-radius: 50%; width: 28px; height: 28px;
+            font-size: 0.85em; font-weight: 600; cursor: pointer; display: flex;
+            align-items: center; justify-content: center; transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .tutorial-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
 
         .main-container {
             display: flex; justify-content: center; align-items: flex-start;
@@ -101,11 +109,16 @@
             background: var(--primary-glow); color: var(--primary-color); font-weight: 600;
             box-shadow: inset 0 -2px 0 var(--primary-color);
         }
+        .lens-mode-btn[data-mode="hd-multi"].active {
+            background: rgba(255,153,51,0.1); color: var(--accent-warm);
+            box-shadow: inset 0 -2px 0 var(--accent-warm);
+        }
 
         .config-row { display: flex; align-items: center; gap: 8px; font-size: 0.82em; color: var(--text-color); margin-bottom: 0.5em; }
         .config-row input[type="checkbox"], .config-row input[type="radio"] { accent-color: var(--primary-color); }
         .config-row label { cursor: pointer; display: flex; align-items: center; gap: 6px; }
 
+        .cal-section { display: flex; flex-direction: column; gap: 6px; }
         .cal-row { display: flex; align-items: center; gap: 6px; }
         .cal-row input[type="number"] {
             width: 4em; background: var(--bg-color); color: #fff; border: 1px solid var(--border-color);
@@ -115,8 +128,14 @@
         .cal-row button {
             background: var(--primary-color); color: #000; border: 0; border-radius: 6px;
             font-size: 0.75em; font-weight: 600; padding: 6px 10px; cursor: pointer;
-            font-family: 'DM Sans', sans-serif;
+            font-family: 'DM Sans', sans-serif; transition: opacity 0.15s;
         }
+        .cal-row button:hover { opacity: 0.85; }
+        .cal-auto-btn {
+            background: var(--surface-alt) !important; color: var(--text-color) !important;
+            border: 1px solid var(--border-color) !important;
+        }
+        .cal-hint { font-size: 0.68em; color: var(--text-dim); line-height: 1.4; }
         .scale-readout { color: var(--text-dim); font-size: 0.75em; margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
         .divider { border: none; border-top: 1px solid var(--border-color); margin: 1.2em 0; }
         #progressiveAddGroup { display: none; }
@@ -147,7 +166,9 @@
             backdrop-filter: blur(8px); border: 1px solid var(--border-color);
             border-radius: 20px; padding: 5px 14px; font-size: 0.72em; font-weight: 600;
             color: var(--primary-color); letter-spacing: 0.5px; pointer-events: none;
+            transition: color 0.3s;
         }
+        .mode-badge.hd { color: var(--accent-warm); border-color: rgba(255,153,51,0.3); }
 
         .metrics-box {
             background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: var(--radius-lg);
@@ -222,12 +243,59 @@
         .dist-zone-range { color: var(--text-dim); font-family: 'JetBrains Mono', monospace; font-size: 0.9em; }
 
         .hd-info-callout {
-            display: none; background: rgba(0,212,170,0.06); border: 1px solid rgba(0,212,170,0.2);
+            display: none; background: rgba(255,153,51,0.06); border: 1px solid rgba(255,153,51,0.2);
             border-radius: var(--radius); padding: 10px 14px; margin-top: 8px; font-size: 0.75em;
             color: var(--text-muted); line-height: 1.5;
         }
         .hd-info-callout.visible { display: block; }
-        .hd-info-callout strong { color: var(--primary-color); }
+        .hd-info-callout strong { color: var(--accent-warm); }
+
+        /* ── Tutorial Modal ── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px); z-index: 1000; overflow-y: auto;
+            padding: 20px;
+        }
+        .modal-overlay.visible { display: flex; align-items: flex-start; justify-content: center; }
+        .modal-box {
+            background: var(--surface-color); border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg); padding: 28px; max-width: 600px; width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6); margin: auto;
+        }
+        .modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 16px;
+        }
+        .modal-header h2 { margin: 0; font-size: 1.1em; font-weight: 600; color: var(--primary-color); letter-spacing: 0.5px; }
+        .modal-close {
+            background: none; border: 1px solid var(--border-color); color: var(--text-muted);
+            border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 0.8em;
+            transition: all 0.15s;
+        }
+        .modal-close:hover { border-color: var(--accent-danger); color: var(--accent-danger); }
+        .tut-section { margin-bottom: 22px; }
+        .tut-section h3 {
+            font-size: 0.75em; text-transform: uppercase; letter-spacing: 1px;
+            color: var(--primary-color); margin: 0 0 10px; font-weight: 600;
+        }
+        .tut-section p { font-size: 0.84em; color: var(--text-muted); line-height: 1.6; margin: 0 0 8px; }
+        .tut-section p:last-child { margin-bottom: 0; }
+        .tut-row { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 7px; }
+        .tut-swatch { width: 16px; height: 12px; border-radius: 3px; flex-shrink: 0; margin-top: 3px; }
+        .tut-row span { font-size: 0.82em; color: var(--text-muted); line-height: 1.5; }
+        .tut-compare {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;
+        }
+        .tut-compare-card {
+            background: var(--surface-alt); border-radius: var(--radius); padding: 12px;
+            border: 1px solid var(--border-color);
+        }
+        .tut-compare-card h4 {
+            margin: 0 0 8px; font-size: 0.78em; font-weight: 600; letter-spacing: 0.3px;
+        }
+        .tut-compare-card h4.prog { color: var(--primary-color); }
+        .tut-compare-card h4.hd { color: var(--accent-warm); }
+        .tut-compare-card p { font-size: 0.75em; color: var(--text-dim); line-height: 1.5; margin: 0; }
 
         @media (max-width: 900px) {
             .main-container { flex-direction: column-reverse; padding-bottom: 80px; }
@@ -238,13 +306,15 @@
             .controls-header { display: block; }
             .controls.is-collapsed .controls-body { display: none; }
             .controls-body { padding: 1.2em 1.4em; max-height: 60vh; overflow-y: auto; }
+            .tut-compare { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
     <div class="app-header">
         <h1>Lens RX Simulator</h1>
-        <span class="version-tag">v55.0</span>
+        <span class="version-tag">v56.0</span>
+        <button class="tutorial-btn" id="tutorialBtn" title="How to use this simulator">?</button>
     </div>
     <div class="main-container">
         <div class="controls is-collapsed">
@@ -271,7 +341,7 @@
                     <div class="input-group"><label>ADD Power</label><div class="slider-group"><input type="range" id="addPower" min="0.75" max="3.50" value="2.00" step="0.25"><span id="addPowerValue">+2.00</span></div></div>
                 </div>
                 <div class="hd-info-callout" id="hdInfoCallout">
-                    <strong>HD Digital Multi-Functional</strong> &mdash; Camber&trade; tech provides a dramatically wider intermediate &amp; near corridor (14&Prime;&ndash;6ft), with minimal peripheral swim. Max distance ~13ft. Ideal for desk/computer work, crafts, and reading.
+                    <strong>HD Digital Multi-Functional</strong> &mdash; Camber&trade; tech provides a dramatically wider intermediate &amp; near corridor (14&Prime;&ndash;6ft), with minimal peripheral swim. Max distance <strong>~13ft</strong> — optimized for desk, computer, and close-range tasks.
                 </div>
 
                 <hr class="divider">
@@ -284,11 +354,22 @@
 
                 <hr class="divider">
                 <span class="section-label">Screen Calibration</span>
-                <div class="cal-row"><input type="number" id="measuredMm" value="36" min="10" max="100" step="0.1"><span style="font-size:0.8em;color:var(--text-dim);">measured mm</span><button id="applyCalBtn">Apply</button></div>
-                <div class="scale-readout">Scale: <span id="scaleValue">1.00&times;</span></div>
+                <div class="cal-section">
+                    <div class="cal-row">
+                        <button id="autoCalBtn" class="cal-auto-btn">Auto-Detect</button>
+                        <span style="font-size:0.75em;color:var(--text-dim);">estimate from display</span>
+                    </div>
+                    <div class="cal-row">
+                        <input type="number" id="measuredMm" value="36" min="10" max="100" step="0.1">
+                        <span style="font-size:0.8em;color:var(--text-dim);">measured mm</span>
+                        <button id="applyCalBtn">Apply</button>
+                    </div>
+                    <div class="cal-hint">Measure the white bar shown in the canvas corner with a ruler, enter that value, and click Apply.</div>
+                    <div class="scale-readout">Scale: <span id="scaleValue">1.00&times;</span></div>
+                </div>
             </div>
         </div>
-        
+
         <div class="visualization-area">
             <div class="canvas-wrapper">
                 <canvas id="lensCanvas"></canvas>
@@ -322,6 +403,57 @@
         </div>
     </div>
 
+    <!-- Tutorial Modal -->
+    <div class="modal-overlay" id="tutorialOverlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2>How to Use This Simulator</h2>
+                <button class="modal-close" id="tutorialClose">Close</button>
+            </div>
+
+            <div class="tut-section">
+                <h3>Prescription Values</h3>
+                <p><strong style="color:var(--text-color)">SPH (Sphere)</strong> is the main corrective power. Negative values (−) are for nearsightedness; positive (+) for farsightedness. The stronger the number, the thicker the lens and the more optical distortion to manage.</p>
+                <p><strong style="color:var(--text-color)">CYL (Cylinder) &amp; Axis</strong> correct astigmatism — an uneven curvature of the eye. The axis (0–180°) tells the lab which direction to orient the cylinder grind. High CYL values create the "oblique distortion" pattern you see as the heatmap twists.</p>
+                <p><strong style="color:var(--text-color)">Decentration</strong> is how far the optical center is shifted from the lens blank center (in mm). Larger values increase peripheral distortion.</p>
+            </div>
+
+            <div class="tut-section">
+                <h3>Reading the Heatmap</h3>
+                <div class="tut-row"><div class="tut-swatch" style="background:#00bfff"></div><span><strong style="color:#fff">Cyan/Blue</strong> — Clear, undistorted vision. In progressive/HD modes, blue indicates far-distance capability.</span></div>
+                <div class="tut-row"><div class="tut-swatch" style="background:#39ff14"></div><span><strong style="color:#fff">Green</strong> — Excellent clarity. The comfort zone of the lens.</span></div>
+                <div class="tut-row"><div class="tut-swatch" style="background:#ffd700"></div><span><strong style="color:#fff">Yellow</strong> — Mild distortion. Most people adapt well to this region.</span></div>
+                <div class="tut-row"><div class="tut-swatch" style="background:#ff9933"></div><span><strong style="color:#fff">Orange</strong> — Moderate distortion or limited distance range. May cause swim or blur.</span></div>
+                <div class="tut-row"><div class="tut-swatch" style="background:#ff2200"></div><span><strong style="color:#fff">Red</strong> — Strong distortion. Most patients avoid looking through these zones after adaptation.</span></div>
+                <p style="margin-top:8px">The grid lines show how objects appear to warp through the lens. Straight lines that curve represent the "swim" effect patients notice when moving their head.</p>
+            </div>
+
+            <div class="tut-section">
+                <h3>Lens Types Compared</h3>
+                <div class="tut-compare">
+                    <div class="tut-compare-card">
+                        <h4 class="prog">Progressive</h4>
+                        <p>Distance at top, reading at bottom, with a narrow transition corridor. The top zone is blue — true distance vision to infinity. Wider prescriptions and high ADD powers make the clear corridor narrower. Best for general all-day wear.</p>
+                    </div>
+                    <div class="tut-compare-card">
+                        <h4 class="hd">HD Multi-Functional</h4>
+                        <p>Camber™ technology maximizes the intermediate and near zones. The corridor is 2–3× wider than progressive, but the top zone is deliberately amber/orange — max distance is ~13ft. Ideal for computer work, crafts, and reading.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tut-section">
+                <h3>Lens Cross-Section</h3>
+                <p>The silhouette in the canvas corner shows the actual profile of your lens (not just thickness). A <strong style="color:var(--text-color)">plus lens</strong> (farsighted) is thickest in the center, like a magnifying glass. A <strong style="color:var(--text-color)">minus lens</strong> (nearsighted) is thinnest in the center with thick edges — which is why high-minus lenses are often called "coke-bottle" glasses. The shape also explains why plus lenses make eyes look bigger, and minus lenses make them look smaller.</p>
+            </div>
+
+            <div class="tut-section">
+                <h3>Screen Calibration</h3>
+                <p>For accurate physical sizing, click <strong style="color:var(--text-color)">Auto-Detect</strong> first. Then look at the reference bar drawn in the lower-left corner of the lens canvas — it represents 50mm. Physically measure it with a ruler, type that measurement into the box, and click <strong style="color:var(--text-color)">Apply</strong>. All lens dimensions will now reflect true physical scale on your screen.</p>
+            </div>
+        </div>
+    </div>
+
 <script>
 // =========================
 // SETUP
@@ -329,7 +461,7 @@
 const ui = {};
 ['sphere','sphereValue','cylinder','cylinderValue','axis','axisValue','materialSlider','materialName',
  'decentration','decentrationValue','clarityDiameterValue','riskValue','riskConfidence','centerThicknessValue','edgeThicknessValue',
- 'sph-minus','sph-plus','cyl-minus','cyl-plus','measuredMm','applyCalBtn','scaleValue',
+ 'sph-minus','sph-plus','cyl-minus','cyl-plus','measuredMm','applyCalBtn','autoCalBtn','scaleValue',
  'addPower','addPowerValue','lensRight','lensLeft','rulerToggle','bestPossibleToggle',
  'distanceOverlayToggle','progressiveAddGroup','modeBadge','distanceLegend','legendRows',
  'distanceInfoBar','distZoneChips','hdInfoCallout'].forEach(id => ui[id] = document.getElementById(id));
@@ -344,6 +476,7 @@ const controlsHeader = document.querySelector('.controls-header');
 
 let dpr = 1, basePxPerMmPhysical = 4, calibrationScale = 1.0;
 let currentLensMode = 'sv';
+let rafPending = null;
 
 const MATERIALS = {
   "1.50": { name: "CR-39 (1.50)",     n: 1.50, centerThickness: 1.9, minEdge: 2.0, factor: 0.8 },
@@ -363,17 +496,19 @@ const RISK_BANDS = [
     { range: [93,100], label: "Fishbowl Territory" }
 ];
 
+// Progressive: blue top zone = true infinite distance
 const PROGRESSIVE_DISTANCE_ZONES = [
     { label: "Near (14\u201318\u2033)",          color: "#00bfff" },
     { label: "Intermediate (19\u201336\u2033)",  color: "#39ff14" },
     { label: "Mid-Range (3\u20138 ft)",          color: "#ffd700" },
-    { label: "Distance (8 ft+)",                 color: "#ff6644" }
+    { label: "Distance (8ft \u2192 \u221e)",     color: "#5599ff" }
 ];
+// HD Multi: amber top zone = room distance only (~13ft max)
 const HD_MULTI_DISTANCE_ZONES = [
     { label: "Near (14\u201318\u2033)",          color: "#00bfff" },
     { label: "Intermediate (19\u201348\u2033)",  color: "#39ff14" },
     { label: "Desk (4\u20136 ft)",               color: "#ffd700" },
-    { label: "Room (6\u201313 ft max)",          color: "#ff8c42" }
+    { label: "Room (6\u201313ft max)",           color: "#ff9933" }
 ];
 
 // =========================
@@ -391,6 +526,12 @@ function calculateBaseScale(){
     document.body.appendChild(p);dpr=window.devicePixelRatio||1;
     basePxPerMmPhysical=(p.getBoundingClientRect().width||3.78)*dpr;
     document.body.removeChild(p);
+    // Cross-check with devicePixelRatio-aware screen estimate
+    const screenEstimate = (window.screen.width / window.innerWidth) * dpr * 96 / 25.4;
+    if(screenEstimate > 2) {
+        // Blend: trust the DOM measurement primarily, but sanity-check
+        basePxPerMmPhysical = (basePxPerMmPhysical * 0.7 + screenEstimate * dpr * 0.3);
+    }
 }
 function getPxPerMm(){return basePxPerMmPhysical*calibrationScale;}
 function setupCanvas(){
@@ -520,6 +661,7 @@ function drawVisualization(){
     ui.edgeThicknessValue.textContent=m.edgeT.toFixed(1)+" mm";
     const ml={sv:"Single Vision",progressive:"Progressive","hd-multi":"HD Multi-Functional"};
     ui.modeBadge.textContent=ml[currentLensMode];
+    ui.modeBadge.classList.toggle('hd', currentLensMode==='hd-multi');
     updateRiskUI(p);
     createWarpBackground(offscreenCtx,canvas.width,canvas.height,p,m);
     drawRayMappedView(p,m);
@@ -551,7 +693,7 @@ function drawAdvancedSVHeatmap(c2,w,h,p,met){
     c2.restore();
 }
 
-// Traditional Progressive — narrow corridor
+// ── Progressive: NARROW corridor, blue top = true far distance (infinity capable) ──
 function drawProgressiveHeatMap(c2,w,h,p,met){
     const pm=getPxPerMm(),cx=w/2,cy=h/2;
     const dMm=11,iMm=3,ns=(p.side==='R'?-1:1);
@@ -560,43 +702,65 @@ function drawProgressiveHeatMap(c2,w,h,p,met){
     const bwt=lerp(12,5,rs),bwb=lerp(7,4,rs);
     function cX(y){const t=clamp((y-cy)/dPx,0,1);return cx+ns*iPx*(t*(1-0.3*t)-0.15*Math.pow(t,3));}
     function hW(y){const t=clamp((y-cy)/dPx,0,1);return(lerp(bwt,bwb,t)*(1-0.6*Math.sin(Math.PI*t)))*pm;}
+
     c2.fillStyle='rgba(255,0,0,1)';c2.fillRect(0,0,w,h);
     const id=c2.getImageData(0,0,w,h),d=id.data;
-    for(let y=0;y<h;y++){for(let x=0;x<w;x++){
-        const dx=x-cx,dy=y-cy;
-        const ccX=cX(y),hw=hW(y)||1;
-        const dfc=Math.abs(x-ccX)/hw;
+
+    // Pre-compute row-dependent values — avoids redundant per-pixel calls
+    const cXArr=new Float32Array(h),hWArr=new Float32Array(h),vpArr=new Float32Array(h),ytArr=new Float32Array(h);
+    for(let y=0;y<h;y++){
+        cXArr[y]=cX(y); hWArr[y]=hW(y)||1;
         let vp=0;
         if(y<cy-6*pm)vp=((cy-6*pm)-y)/(6*pm);
         if(y>cy+dPx+4*pm)vp=(y-(cy+dPx+4*pm))/(6*pm);
-        const ap=clamp(distortionScoreAt(dx,dy,w,h,p,met)*3.0,0,5);
-        const isn=(x-cx)*ns>0;
-        const nb=clamp(isn?Math.abs(x-cx)/(10*pm):0,0,1.2)*clamp((y-cy)/dPx,0,1);
-        let cs=dfc*(1.2+rs*2.0)+ap*(0.8+nb)+clamp(vp,0,2)*0.7;
-        cs*=(0.6+0.4*clamp((y-cy)/dPx,0,1));
-        const col=heatColor(clamp(cs/3.5,0,1));
-        const pts=col.match(/\d+/g);
-        const idx=(y*w+x)*4;
-        d[idx]=parseInt(pts[0]);d[idx+1]=parseInt(pts[1]);d[idx+2]=parseInt(pts[2]);d[idx+3]=255;
-    }}
+        vpArr[y]=vp;
+        ytArr[y]=clamp((y-cy)/dPx,0,1);
+    }
+
+    const step=2; // half-resolution — 4× speedup with minimal visible difference
+    for(let y=0;y<h;y+=step){
+        const ccX=cXArr[y],hw=hWArr[y],vp=vpArr[y],yt=ytArr[y];
+        for(let x=0;x<w;x+=step){
+            const dx=x-cx,dy=y-cy;
+            const dfc=Math.abs(x-ccX)/hw;
+            const ap=clamp(distortionScoreAt(dx,dy,w,h,p,met)*3.0,0,5);
+            const isn=(x-cx)*ns>0;
+            const nb=clamp(isn?Math.abs(x-cx)/(10*pm):0,0,1.2)*yt;
+            let cs=dfc*(1.2+rs*2.0)+ap*(0.8+nb)+clamp(vp,0,2)*0.7;
+            cs*=(0.6+0.4*yt);
+
+            let col;
+            // Top: blend toward blue — progressive can see to infinity (unlike HD Multi)
+            if(y < cy-3*pm){
+                const distFade=clamp((cy-3*pm-y)/(9*pm),0,1);
+                const base=heatColor(clamp(cs/3.5,0,1));
+                col=[
+                    (base[0]*(1-distFade*0.55))|0,
+                    Math.min(255,(base[1]*(1-distFade*0.15)+110*distFade))|0,
+                    Math.min(255,(base[2]*(1-distFade*0.2)+220*distFade))|0
+                ];
+            } else {
+                col=heatColor(clamp(cs/3.5,0,1));
+            }
+
+            // Write 2×2 block
+            for(let by=0;by<step&&y+by<h;by++){for(let bx=0;bx<step&&x+bx<w;bx++){
+                const idx=((y+by)*w+(x+bx))*4;
+                d[idx]=col[0];d[idx+1]=col[1];d[idx+2]=col[2];d[idx+3]=255;
+            }}
+        }
+    }
     c2.putImageData(id,0,0);
     if(p.showDistOverlay)drawDistanceRangeOverlay(c2,w,h,p,'progressive');
 }
 
-/**
- * HD Digital Multi-Functional Lens (Camber Technology)
- * - 14" to 6ft focal length, max room distance ~13ft
- * - Dramatically wider corridor (~2.5-3x progressive)
- * - Minimal peripheral swim/warping
- * - Slight top-edge softness (limited distance vs infinity)
- */
+// ── HD Multi-Func: WIDE corridor, amber top = room distance only (~13ft) ──
 function drawHDMultiFuncHeatMap(c2,w,h,p,met){
     const pm=getPxPerMm(),cx=w/2,cy=h/2;
     const dMm=15,iMm=1.8,ns=(p.side==='R'?-1:1);
     const dPx=dMm*pm,iPx=iMm*pm;
     const rs=clamp(met.dS/100,0,1);
     const bwt=lerp(24,16,rs),bwm=lerp(20,12,rs),bwb=lerp(18,10,rs);
-
     function cX(y){const t=clamp((y-cy)/dPx,0,1);return cx+ns*iPx*(t*(1-0.4*t));}
     function hW(y){
         const t=clamp((y-cy)/dPx,0,1);
@@ -608,24 +772,49 @@ function drawHDMultiFuncHeatMap(c2,w,h,p,met){
 
     c2.fillStyle='rgba(255,0,0,1)';c2.fillRect(0,0,w,h);
     const id=c2.getImageData(0,0,w,h),d=id.data;
-    for(let y=0;y<h;y++){for(let x=0;x<w;x++){
-        const dx=x-cx,dy=y-cy;
-        const ccX=cX(y),hw=hW(y)||1;
-        const dfc=Math.abs(x-ccX)/hw;
+
+    const cXArr=new Float32Array(h),hWArr=new Float32Array(h),vpArr=new Float32Array(h),ytArr=new Float32Array(h);
+    for(let y=0;y<h;y++){
+        cXArr[y]=cX(y); hWArr[y]=hW(y)||1;
         let vp=0;
-        // Top: gentle softness — distance limited to ~13ft, not infinity
         if(y<cy-8*pm){vp=((cy-8*pm)-y)/(14*pm);vp*=0.45;}
         if(y>cy+dPx+6*pm)vp=(y-(cy+dPx+6*pm))/(10*pm);
-        const ap=clamp(distortionScoreAt(dx,dy,w,h,p,met)*1.2,0,2.5);
-        const isn=(x-cx)*ns>0;
-        const nb=clamp(isn?Math.abs(x-cx)/(18*pm):0,0,0.5)*clamp((y-cy)/dPx,0,1);
-        let cs=dfc*(0.5+rs*0.9)+ap*(0.35+nb*0.4)+clamp(vp,0,1.2)*0.4;
-        cs*=(0.35+0.25*clamp((y-cy)/dPx,0,1));
-        const col=heatColor(clamp(cs/3.5,0,1));
-        const pts=col.match(/\d+/g);
-        const idx=(y*w+x)*4;
-        d[idx]=parseInt(pts[0]);d[idx+1]=parseInt(pts[1]);d[idx+2]=parseInt(pts[2]);d[idx+3]=255;
-    }}
+        vpArr[y]=vp;
+        ytArr[y]=clamp((y-cy)/dPx,0,1);
+    }
+
+    const step=2;
+    for(let y=0;y<h;y+=step){
+        const ccX=cXArr[y],hw=hWArr[y],vp=vpArr[y],yt=ytArr[y];
+        for(let x=0;x<w;x+=step){
+            const dx=x-cx,dy=y-cy;
+            const dfc=Math.abs(x-ccX)/hw;
+            const ap=clamp(distortionScoreAt(dx,dy,w,h,p,met)*1.2,0,2.5);
+            const isn=(x-cx)*ns>0;
+            const nb=clamp(isn?Math.abs(x-cx)/(18*pm):0,0,0.5)*yt;
+            let cs=dfc*(0.5+rs*0.9)+ap*(0.35+nb*0.4)+clamp(vp,0,1.2)*0.4;
+            cs*=(0.35+0.25*yt);
+
+            let col;
+            // Top: amber/orange tint — HD Multi CANNOT see to infinity; caps at ~13ft room distance
+            if(y < cy-4*pm){
+                const roomFade=clamp((cy-4*pm-y)/(11*pm),0,1);
+                const base=heatColor(clamp(cs/3.5,0,1));
+                col=[
+                    Math.min(255,(base[0]+90*roomFade*(1-rs*0.3)))|0,
+                    Math.min(255,(base[1]*(1-roomFade*0.5)+100*roomFade*(1-rs*0.4)))|0,
+                    (base[2]*(1-roomFade))|0
+                ];
+            } else {
+                col=heatColor(clamp(cs/3.5,0,1));
+            }
+
+            for(let by=0;by<step&&y+by<h;by++){for(let bx=0;bx<step&&x+bx<w;bx++){
+                const idx=((y+by)*w+(x+bx))*4;
+                d[idx]=col[0];d[idx+1]=col[1];d[idx+2]=col[2];d[idx+3]=255;
+            }}
+        }
+    }
     c2.putImageData(id,0,0);
     if(p.showDistOverlay)drawDistanceRangeOverlay(c2,w,h,p,'hd-multi');
 }
@@ -636,14 +825,14 @@ function drawDistanceRangeOverlay(c2,w,h,p,type){
     let zones;
     if(type==='progressive'){
         zones=[
-            {yS:0,yE:cy-6*pm,col:"rgba(255,102,68,0.16)",bdr:"#ff6644",lbl:"DISTANCE  8ft+"},
+            {yS:0,yE:cy-6*pm,col:"rgba(85,153,255,0.14)",bdr:"#5599ff",lbl:"DISTANCE  8ft \u2192 \u221e"},
             {yS:cy-6*pm,yE:cy+2*pm,col:"rgba(255,215,0,0.12)",bdr:"#ffd700",lbl:"MID-RANGE  3\u20138ft"},
             {yS:cy+2*pm,yE:cy+10*pm,col:"rgba(57,255,20,0.12)",bdr:"#39ff14",lbl:"INTERMEDIATE  19\u201336\u2033"},
             {yS:cy+10*pm,yE:h,col:"rgba(0,191,255,0.12)",bdr:"#00bfff",lbl:"NEAR  14\u201318\u2033"},
         ];
     }else{
         zones=[
-            {yS:0,yE:cy-6*pm,col:"rgba(255,140,66,0.16)",bdr:"#ff8c42",lbl:"ROOM  6\u201313ft max"},
+            {yS:0,yE:cy-6*pm,col:"rgba(255,153,51,0.14)",bdr:"#ff9933",lbl:"ROOM  6\u201313ft max"},
             {yS:cy-6*pm,yE:cy+3*pm,col:"rgba(255,215,0,0.12)",bdr:"#ffd700",lbl:"DESK  4\u20136ft"},
             {yS:cy+3*pm,yE:cy+12*pm,col:"rgba(57,255,20,0.12)",bdr:"#39ff14",lbl:"INTERMEDIATE  19\u201348\u2033"},
             {yS:cy+12*pm,yE:h,col:"rgba(0,191,255,0.12)",bdr:"#00bfff",lbl:"NEAR  14\u201318\u2033"},
@@ -725,7 +914,7 @@ function drawClinicalOverlay(p,met){
         ctx.lineWidth=2.5;ctx.strokeStyle='rgba(255,255,255,0.55)';
         ctx.beginPath();ctx.ellipse(cx,cy,cr*an,cr/an,ar,0,2*Math.PI);ctx.stroke();
     }
-    drawCalibrationBar(pm,w,h,met.edgeT);
+    drawLensCrossSection(pm,w,h,met.centerT,met.edgeT);
 }
 
 function drawProgressiveMarkers(c2,cx,cy,pm,p){
@@ -744,11 +933,8 @@ function drawHDMultiMarkers(c2,cx,cy,pm,p){
     const ry=cy-(6*pm),dy2=cy-pm;
     const nx=cx+(2*ns*pm),ny=cy+(15*pm);
     c2.lineWidth=2;c2.strokeStyle='rgba(255,255,255,0.6)';c2.setLineDash([]);
-    // Room zone — wide ellipse
     c2.beginPath();c2.ellipse(cx,ry,9*pm,3.5*pm,0,0,2*Math.PI);c2.stroke();
-    // Desk zone
     c2.beginPath();c2.ellipse(cx,dy2,8*pm,3*pm,0,0,2*Math.PI);c2.stroke();
-    // Near — wider than progressive
     c2.beginPath();c2.arc(nx,ny,6*pm,0,2*Math.PI);c2.stroke();
     c2.fillStyle='rgba(255,255,255,0.65)';c2.font='600 '+8.5*dpr+'px DM Sans,sans-serif';c2.textAlign='center';
     c2.fillText("ROOM \u226413ft",cx,ry-4.5*pm);
@@ -756,26 +942,82 @@ function drawHDMultiMarkers(c2,cx,cy,pm,p){
     c2.fillText("NEAR",nx,ny+7.5*pm);
 }
 
-function drawCalibrationBar(pm,w,h,tMm){
-    const bw=50*pm,bh=tMm*pm,m=16*dpr;
-    ctx.fillStyle='rgba(255,255,255,0.8)';ctx.fillRect(m,h-bh-m,bw,bh);
-    ctx.fillStyle='rgba(255,255,255,0.75)';ctx.font='500 '+10*dpr+'px JetBrains Mono,monospace';ctx.textAlign='left';
-    ctx.fillText('50mm',m,h-bh-m-4*dpr);
-    ctx.textAlign='right';ctx.fillText(tMm.toFixed(1)+'mm thick',m+bw,h-bh-m-4*dpr);
+// ── Lens cross-section: biconvex (plus) or biconcave (minus) ──
+function drawLensCrossSection(pm,w,h,centerT,edgeT){
+    const barW=50*pm;
+    const maxH=Math.max(centerT,edgeT);
+    const halfCT=centerT/2*pm, halfET=edgeT/2*pm;
+    const m=16*dpr;
+    const bX=m;
+
+    // Cap visual height to avoid overflowing canvas at extreme prescriptions
+    const maxVisH=h*0.22;
+    const scale=Math.min(1,maxVisH/(maxH*pm));
+    const sCT=halfCT*scale, sET=halfET*scale;
+
+    const centerY=h - Math.max(sCT,sET) - m - 22*dpr;
+
+    ctx.save();
+
+    // Lens silhouette path — same formula works for both convex and concave
+    // When centerT > edgeT (plus): sCT > sET → bulges outward (biconvex)
+    // When edgeT > centerT (minus): sET > sCT → dips inward (biconcave)
+    ctx.beginPath();
+    ctx.moveTo(bX, centerY - sET);
+    ctx.quadraticCurveTo(bX + barW/2, centerY - sCT, bX + barW, centerY - sET);
+    ctx.lineTo(bX + barW, centerY + sET);
+    ctx.quadraticCurveTo(bX + barW/2, centerY + sCT, bX, centerY + sET);
+    ctx.closePath();
+
+    // Glass-like fill
+    const grad=ctx.createLinearGradient(bX,centerY-Math.max(sCT,sET),bX,centerY+Math.max(sCT,sET));
+    grad.addColorStop(0,'rgba(120,210,255,0.28)');
+    grad.addColorStop(0.5,'rgba(180,235,255,0.12)');
+    grad.addColorStop(1,'rgba(120,210,255,0.28)');
+    ctx.fillStyle=grad;
+    ctx.fill();
+
+    ctx.strokeStyle='rgba(255,255,255,0.72)';
+    ctx.lineWidth=1.5*dpr;
+    ctx.stroke();
+
+    // Reference width line
+    ctx.strokeStyle='rgba(255,255,255,0.35)';
+    ctx.lineWidth=1*dpr;
+    ctx.setLineDash([4,3]);
+    ctx.beginPath();ctx.moveTo(bX,centerY+Math.max(sCT,sET)+6*dpr);ctx.lineTo(bX+barW,centerY+Math.max(sCT,sET)+6*dpr);ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Labels
+    ctx.fillStyle='rgba(255,255,255,0.65)';
+    ctx.font='500 '+Math.round(9*dpr)+'px JetBrains Mono,monospace';
+    const lblY=centerY+Math.max(sCT,sET)+18*dpr;
+    ctx.textAlign='left';
+    ctx.fillText('\u00d850mm',bX,lblY);
+    ctx.textAlign='right';
+    ctx.fillText('c:'+centerT.toFixed(1)+'  e:'+edgeT.toFixed(1)+'mm',bX+barW,lblY);
+
+    ctx.restore();
 }
 
+// ── heatColor: returns [r,g,b] array — avoids string creation + regex parsing per pixel ──
 function heatColor(t){
     t=clamp(t,0,1);let r,g,b;
     if(t<0.25){r=lerp(0,57,t/0.25);g=lerp(191,255,t/0.25);b=lerp(255,20,t/0.25);}
     else if(t<0.5){r=lerp(57,255,(t-0.25)/0.25);g=255;b=lerp(20,0,(t-0.25)/0.25);}
     else if(t<0.75){r=255;g=lerp(255,165,(t-0.5)/0.25);b=0;}
     else{r=255;g=lerp(165,0,(t-0.75)/0.25);b=0;}
-    return 'rgba('+r.toFixed(0)+','+g.toFixed(0)+','+b.toFixed(0)+',1.0)';
+    return [r|0, g|0, b|0];
 }
 
 // =========================
 // UI HELPERS
 // =========================
+function scheduleRedraw(){
+    if(rafPending)cancelAnimationFrame(rafPending);
+    rafPending=requestAnimationFrame(()=>{rafPending=null;drawVisualization();});
+}
+
 function updateAndRedraw(){
     ui.sphereValue.textContent=parseFloat(ui.sphere.value).toFixed(2);
     ui.cylinderValue.textContent=parseFloat(ui.cylinder.value).toFixed(2);
@@ -783,7 +1025,7 @@ function updateAndRedraw(){
     ui.decentrationValue.textContent=parseFloat(ui.decentration.value).toFixed(1);
     ui.materialName.textContent=MATERIALS[MATERIAL_KEYS[parseInt(ui.materialSlider.value)]].name;
     if(currentLensMode!=='sv'&&ui.addPowerValue)ui.addPowerValue.textContent='+'+parseFloat(ui.addPower.value).toFixed(2);
-    drawVisualization();
+    scheduleRedraw();
 }
 
 function adjustSlider(s,v){
@@ -827,15 +1069,31 @@ ui['cyl-plus'].addEventListener('click',()=>adjustSlider(ui.cylinder,0.25));
 
 ui.applyCalBtn.addEventListener('click',()=>{
     const m=parseFloat(ui.measuredMm.value);if(!isFinite(m)||m<=0)return;
-    calibrationScale=50/m;ui.scaleValue.textContent=calibrationScale.toFixed(2)+'\u00d7';drawVisualization();
+    calibrationScale=50/m;ui.scaleValue.textContent=calibrationScale.toFixed(2)+'\u00d7';scheduleRedraw();
 });
+
+ui.autoCalBtn.addEventListener('click',()=>{
+    calculateBaseScale();
+    calibrationScale=1.0;
+    ui.scaleValue.textContent='1.00\u00d7 (auto)';
+    // Pre-fill the measured mm box with the estimated 50mm reference size
+    const estimatedMm=50; // calibration is reset to 1.0, bar will show at raw scale
+    ui.measuredMm.value=estimatedMm;
+    scheduleRedraw();
+});
+
+// Tutorial modal
+const tutOverlay=document.getElementById('tutorialOverlay');
+document.getElementById('tutorialBtn').addEventListener('click',()=>tutOverlay.classList.add('visible'));
+document.getElementById('tutorialClose').addEventListener('click',()=>tutOverlay.classList.remove('visible'));
+tutOverlay.addEventListener('click',(e)=>{if(e.target===tutOverlay)tutOverlay.classList.remove('visible');});
 
 window.addEventListener('load',()=>{setTimeout(()=>{
     calculateBaseScale();setupCanvas();
     if(window.innerWidth<=900)controlsContainer.classList.add('is-collapsed');
     updateAndRedraw();
 },50);});
-window.addEventListener('resize',()=>{setupCanvas();drawVisualization();});
+window.addEventListener('resize',()=>{setupCanvas();scheduleRedraw();});
 </script>
 </body>
 </html>
