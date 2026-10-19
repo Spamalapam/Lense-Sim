@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lens RX Simulator v56.0</title>
+    <title>Lens RX Simulator v57.0</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
@@ -313,7 +313,7 @@
 <body>
     <div class="app-header">
         <h1>Lens RX Simulator</h1>
-        <span class="version-tag">v56.0</span>
+        <span class="version-tag">v57.0</span>
         <button class="tutorial-btn" id="tutorialBtn" title="How to use this simulator">?</button>
     </div>
     <div class="main-container">
@@ -334,14 +334,14 @@
                 <span class="section-label">Lens Type</span>
                 <div class="lens-mode-selector">
                     <button class="lens-mode-btn active" data-mode="sv">Single Vision</button>
-                    <button class="lens-mode-btn" data-mode="progressive">Progressive</button>
-                    <button class="lens-mode-btn" data-mode="hd-multi">HD Multi-Func</button>
+                    <button class="lens-mode-btn" data-mode="progressive">HD Progressive</button>
+                    <button class="lens-mode-btn" data-mode="hd-multi">Multi-Func 2.1</button>
                 </div>
                 <div id="progressiveAddGroup">
                     <div class="input-group"><label>ADD Power</label><div class="slider-group"><input type="range" id="addPower" min="0.75" max="3.50" value="2.00" step="0.25"><span id="addPowerValue">+2.00</span></div></div>
                 </div>
                 <div class="hd-info-callout" id="hdInfoCallout">
-                    <strong>HD Digital Multi-Functional</strong> &mdash; Camber&trade; tech provides a dramatically wider intermediate &amp; near corridor (14&Prime;&ndash;6ft), with minimal peripheral swim. Max distance <strong>~13ft</strong> — optimized for desk, computer, and close-range tasks.
+                    <strong>Multi-Functional 2.1</strong> &mdash; an office design: much less power change spread over a longer corridor, so the middle is several times wider than a progressive. The top keeps some plus, so vision is sharp out to about <strong>6 ft</strong> and softer beyond &mdash; built for desk, computer and close work, not driving.
                 </div>
 
                 <hr class="divider">
@@ -415,17 +415,18 @@
                 <h3>Prescription Values</h3>
                 <p><strong style="color:var(--text-color)">SPH (Sphere)</strong> is the main corrective power. Negative values (−) are for nearsightedness; positive (+) for farsightedness. The stronger the number, the thicker the lens and the more optical distortion to manage.</p>
                 <p><strong style="color:var(--text-color)">CYL (Cylinder) &amp; Axis</strong> correct astigmatism — an uneven curvature of the eye. The axis (0–180°) tells the lab which direction to orient the cylinder grind. High CYL values create the "oblique distortion" pattern you see as the heatmap twists.</p>
-                <p><strong style="color:var(--text-color)">Decentration</strong> is how far the optical center is shifted from the lens blank center (in mm). Larger values increase peripheral distortion.</p>
+                <p><strong style="color:var(--text-color)">Decentration (D_mm)</strong> is the distance from the optical centre to the farthest lens edge. The dashed circle shows it; beyond it is dimmed. Larger values mean thicker minus edges and more of the blurry periphery inside the frame.</p>
             </div>
 
             <div class="tut-section">
                 <h3>Reading the Heatmap</h3>
-                <div class="tut-row"><div class="tut-swatch" style="background:#00bfff"></div><span><strong style="color:#fff">Cyan/Blue</strong> — Clear, undistorted vision. In progressive/HD modes, blue indicates far-distance capability.</span></div>
-                <div class="tut-row"><div class="tut-swatch" style="background:#39ff14"></div><span><strong style="color:#fff">Green</strong> — Excellent clarity. The comfort zone of the lens.</span></div>
-                <div class="tut-row"><div class="tut-swatch" style="background:#ffd700"></div><span><strong style="color:#fff">Yellow</strong> — Mild distortion. Most people adapt well to this region.</span></div>
-                <div class="tut-row"><div class="tut-swatch" style="background:#ff9933"></div><span><strong style="color:#fff">Orange</strong> — Moderate distortion or limited distance range. May cause swim or blur.</span></div>
-                <div class="tut-row"><div class="tut-swatch" style="background:#ff2200"></div><span><strong style="color:#fff">Red</strong> — Strong distortion. Most patients avoid looking through these zones after adaptation.</span></div>
-                <p style="margin-top:8px">The grid lines show how objects appear to warp through the lens. Straight lines that curve represent the "swim" effect patients notice when moving their head.</p>
+                <p>The map is calculated, not drawn: every point traces a real ray from the eye's centre of rotation through the designed lens surfaces (Snell's law + Coddington's equations), and the colour is the predicted eye-chart acuity there for a 4.5 mm pupil, looking at whatever distance that zone is made for.</p>
+                <div class="tut-row"><div class="tut-swatch" style="background:#00bfff"></div><span><strong style="color:#fff">Cyan/Blue</strong> — about 20/20–20/25. Effortless.</span></div>
+                <div class="tut-row"><div class="tut-swatch" style="background:#39ff14"></div><span><strong style="color:#fff">Green</strong> — about 20/40, the driving standard. The white line marks this boundary.</span></div>
+                <div class="tut-row"><div class="tut-swatch" style="background:#ffd700"></div><span><strong style="color:#fff">Yellow</strong> — about 20/70. Readable but soft.</span></div>
+                <div class="tut-row"><div class="tut-swatch" style="background:#ff9933"></div><span><strong style="color:#fff">Orange</strong> — about 20/130. Turn your head instead.</span></div>
+                <div class="tut-row"><div class="tut-swatch" style="background:#ff2200"></div><span><strong style="color:#fff">Red</strong> — 20/200 or worse. Hatched grey = so far off-axis the eye can't look through it.</span></div>
+                <p style="margin-top:8px">The dark grid is a square grid as it really appears through the lens. Lines that bend or lean are the distortion patients feel as "swim" when they move their head.</p>
             </div>
 
             <div class="tut-section">
@@ -433,11 +434,11 @@
                 <div class="tut-compare">
                     <div class="tut-compare-card">
                         <h4 class="prog">Progressive</h4>
-                        <p>Distance at top, reading at bottom, with a narrow transition corridor. The top zone is blue — true distance vision to infinity. Wider prescriptions and high ADD powers make the clear corridor narrower. Best for general all-day wear.</p>
+                        <p>A digital free-form design (the Kirkland Signature HD Digital Progressive class). Distance to infinity at the top, reading at the bottom. Minkwitz's law sets the corridor: unwanted cylinder grows sideways twice as fast as the add grows down, so stronger adds give narrower corridors (about 6 mm at +2.00).</p>
                     </div>
                     <div class="tut-compare-card">
                         <h4 class="hd">HD Multi-Functional</h4>
-                        <p>Camber™ technology maximizes the intermediate and near zones. The corridor is 2–3× wider than progressive, but the top zone is deliberately amber/orange — max distance is ~13ft. Ideal for computer work, crafts, and reading.</p>
+                        <p>An office lens: a smaller power change over a longer corridor, so the middle is about 3× wider than a progressive. The top keeps extra plus, so vision is sharp to about 6 ft and soft beyond. Ideal for computer work, crafts and reading — not driving.</p>
                     </div>
                 </div>
             </div>
@@ -454,6 +455,296 @@
         </div>
     </div>
 
+<script>
+// =========================
+// LENS PHYSICS ENGINE
+// Real geometric optics, ported from the Lens RX Simulator app:
+//  - the lens is designed like a lab would (best-form base curve, ray-optimised aspheric
+//    terms, toric back surface, centre thickness solved so the thinnest edge keeps its minimum);
+//  - every point is found by tracing the real chief ray from the eye's centre of rotation
+//    through both surfaces (vector Snell's law), with Coddington's equations giving the
+//    tangential and sagittal powers there;
+//  - progressives follow Minkwitz's theorem: unwanted cylinder grows sideways at twice the
+//    rate the add grows down the corridor;
+//  - blur becomes predicted acuity (logMAR) for a 4.5 mm pupil.
+// Units: mm and dioptres. Lens coordinates are screen axes from the wearer's side (x right, y down).
+// =========================
+const LensPhysics = (() => {
+  const DEG = Math.PI / 180;
+  const CRE = 13.5;          // cornea → centre of rotation
+  const VERTEX = 12;         // back of lens → cornea
+  const TOOL = 530;          // base curves on the 1.53 tool-index scale
+  const LAM = { C: 0.6563, D: 0.5876, F: 0.4861 };
+
+  function indexAt(nd, abbe, l) {
+    const disp = (nd - 1) / abbe;
+    const b = disp / (1 / (LAM.F * LAM.F) - 1 / (LAM.C * LAM.C));
+    return nd - b / (LAM.D * LAM.D) + b / (l * l);
+  }
+
+  // ---- power vectors: power in meridian θ = m + j0·cos2θ + j45·sin2θ
+  const pv = {
+    sphCyl(s, c, axDeg) { const a = axDeg * DEG; return { m: s + c / 2, j0: -(c / 2) * Math.cos(2 * a), j45: -(c / 2) * Math.sin(2 * a) }; },
+    meridians(p1, beta, p2) { const h = (p1 - p2) / 2; return { m: (p1 + p2) / 2, j0: h * Math.cos(2 * beta), j45: h * Math.sin(2 * beta) }; },
+    at(v, th) { return v.m + v.j0 * Math.cos(2 * th) + v.j45 * Math.sin(2 * th); },
+    add(a, b) { return { m: a.m + b.m, j0: a.j0 + b.j0, j45: a.j45 + b.j45 }; },
+    j(v) { return Math.hypot(v.j0, v.j45); },
+  };
+
+  // ---- even asphere: z = c h² / (1 + √(1 − c²h²)) + a4 h⁴ + a6 h⁶
+  const S = {
+    make(c, a4 = 0, a6 = 0) { return { c, a4, a6 }; },
+    valid(s, h) { return 1 - s.c * s.c * h * h > 1e-6; },
+    sag(s, h) { const h2 = h * h; return s.c * h2 / (1 + Math.sqrt(Math.max(1e-9, 1 - s.c * s.c * h2))) + s.a4 * h2 * h2 + s.a6 * h2 * h2 * h2; },
+    slope(s, h) { const h2 = h * h; return s.c * h / Math.sqrt(Math.max(1e-9, 1 - s.c * s.c * h2)) + 4 * s.a4 * h2 * h + 6 * s.a6 * h2 * h2 * h; },
+    tan(s, h) {
+      const h2 = h * h, zp = S.slope(s, h);
+      const zpp = s.c / Math.pow(Math.max(1e-9, 1 - s.c * s.c * h2), 1.5) + 12 * s.a4 * h2 + 30 * s.a6 * h2 * h2;
+      return zpp / Math.pow(1 + zp * zp, 1.5);
+    },
+    sagittal(s, h) { if (Math.abs(h) < 1e-6) return s.c; const zp = S.slope(s, h); return zp / (h * Math.sqrt(1 + zp * zp)); },
+  };
+
+  function backCurvatureFor(P, front, ct, n) {
+    const f1 = (n - 1) * front.c * 1000;
+    const eff = f1 / (1 - (ct / 1000 / n) * f1);
+    return (P - eff) / ((1 - n) * 1000);
+  }
+
+  function refract(dx, dz, nx, nz, eta) {
+    let cosi = -(dx * nx + dz * nz);
+    if (cosi < 0) { nx = -nx; nz = -nz; cosi = -cosi; }
+    const k = 1 - eta * eta * (1 - cosi * cosi);
+    if (k < 0) return null;
+    const f = eta * cosi - Math.sqrt(k);
+    return [eta * dx + f * nx, eta * dz + f * nz];
+  }
+  const transfer = (L, d, n) => { const den = 1 - d * L / n; return Math.abs(den) < 1e-9 ? 1e9 : L / den; };
+
+  // Chief ray from the centre of rotation → back → front → object space, + Coddington.
+  function trace(front, back, perp, ct, n, L, theta, powers) {
+    const st = Math.sin(theta), cth = Math.cos(theta);
+    if (cth < 0.2) return null;
+    let s = L / cth;
+    for (let i = 0; i < 14; i++) s = (L - S.sag(back, s * st)) / cth;
+    const hB = s * st;
+    if (!S.valid(back, hB)) return null;
+    const zB = ct + S.sag(back, hB);
+    let sl = S.slope(back, hB), len = Math.sqrt(1 + sl * sl);
+    const n2x = -sl / len, n2z = 1 / len;
+    const cosI2 = Math.abs(st * n2x - cth * n2z);
+    const g = refract(st, -cth, n2x, n2z, 1 / n); if (!g) return null;
+    let u = 0;
+    for (let i = 0; i < 14; i++) u = (S.sag(front, hB + u * g[0]) - zB) / g[1];
+    const hF = hB + u * g[0];
+    if (!S.valid(front, hF) || u <= 0) return null;
+    sl = S.slope(front, hF); len = Math.sqrt(1 + sl * sl);
+    const n1x = -sl / len, n1z = 1 / len;
+    const o = refract(g[0], g[1], n1x, n1z, n); if (!o) return null;
+    const thObj = Math.atan2(o[0], -o[1]);
+    if (!powers) return { hB, hF, thObj };
+    const cosI1 = Math.abs(o[0] * n1x + o[1] * n1z);
+    const cosI1g = Math.abs(g[0] * n1x + g[1] * n1z);
+    const cosI2g = Math.abs(g[0] * n2x + g[1] * n2z);
+    const obF = n * cosI1g - cosI1;
+    let lt = obF * S.tan(front, hF) / (cosI1g * cosI1g);
+    let ls = obF * S.sagittal(front, hF);
+    lt = transfer(lt, u, n); ls = transfer(ls, u, n);
+    const obB = cosI2 - n * cosI2g;
+    lt = (lt * cosI2g * cosI2g + obB * S.tan(back, hB)) / (cosI2 * cosI2);
+    ls += obB * S.sagittal(perp, hB);
+    const e = s - L;
+    lt = transfer(lt, e, 1); ls = transfer(ls, e, 1);
+    return { hB, hF, thObj, ft: lt * 1000, fs: ls * 1000 };
+  }
+
+  // ---- progressive / office surface designs
+  const DESIGNS = {
+    // Digital free-form progressive (the Kirkland Signature HD Digital Progressive class).
+    progressive: { startY: -4, endBeyond: 1, q: 4, spread: 1.45, cap: 1.0, tail: 0.30, lobe: 0.45, office: false },
+    // Office lens like Multi-Functional 2.1: top focused to about 6 ft, very wide middle.
+    'hd-multi': { startY: -18, endBeyond: 2, q: 4, spread: 1.30, cap: 0.80, tail: 0.25, lobe: 0.35, office: true },
+  };
+
+  function makePal(mode, add, corridorMm, nasal, inset, reachFt) {
+    const d = DESIGNS[mode];
+    const topAdd = d.office ? Math.max(0, Math.min(1 / (reachFt * 0.3048) + 0.18, add - 0.25)) : 0;
+    const startY = d.startY, endY = d.office ? 16 : corridorMm + d.endBeyond;
+    const range = add - topAdd, span = endY - startY, q = d.q, norm = q / (q + 1);
+    const peak = range / span / norm, tailSigma = 0.7 * span, mid = (startY + endY) / 2;
+    const half = (u) => (u + (Math.pow(1 - 2 * u, q + 1) - 1) / (2 * (q + 1))) / norm;
+    const ramp = (t) => { const c = Math.min(1, Math.max(0, t)); return c <= 0.5 ? half(c) : 1 - half(1 - c); };
+    const smooth = (t) => { const c = Math.min(1, Math.max(0, t)); return c * c * (3 - 2 * c); };
+    const along = (y) => topAdd + range * ramp((y - startY) / span);
+    const slopeAt = (y) => { const t = (y - startY) / span; return t <= 0 || t >= 1 ? 0 : range * (1 - Math.pow(Math.abs(2 * t - 1), q)) / norm / span; };
+    const umbilic = (y) => nasal * inset * ramp((y - startY) / span);
+    function at(x, y) {
+      const tail = peak * d.tail * Math.exp(-Math.pow((y - mid) / tailSigma, 2));
+      const lobe = y <= mid ? 0 : peak * d.lobe * Math.exp(-Math.pow(Math.max(0, y - endY) / 12, 2));
+      const grad = Math.max(slopeAt(y), tail, lobe);
+      const env = 0.12 + 0.88 * smooth((y - (startY - 3)) / ((endY + 2) - (startY - 3)));
+      const cap = Math.max(0.05, range * d.cap * env);
+      const dx = x - umbilic(y);
+      const cyl = cap * Math.tanh(2 * grad * Math.abs(dx) / (cap * d.spread));   // Minkwitz, spread by the design
+      const meanAdd = along(y) * (1 - 0.30 * cyl / cap);
+      const axis = Math.PI / 2 + Math.sign(dx) * nasal * (Math.PI / 4) * Math.tanh(Math.abs(dx) / 5);
+      const a = pv.meridians(cyl / 2, axis, -cyl / 2);
+      return { meanAdd, j0: a.j0, j45: a.j45, cyl };
+    }
+    return { topAdd, startY, endY, along, umbilic, at };
+  }
+
+  // ---- the lens
+  function build(p) {
+    // p: {sph, cyl, axis (written), add, mode, side, material:{nd,abbe,density,minCenter,minEdge},
+    //     aspheric, radiusMm, corridorMm, reachFt}
+    let sph = p.sph, cyl = p.cyl, axis = p.axis;
+    if (cyl > 0) { sph += cyl; cyl = -cyl; axis = (axis + 90) % 180; }
+    const axisRad = axis * DEG;
+    const lens = pv.meridians(sph, axisRad, sph + cyl);
+    const pAxis = sph, pAcross = sph + cyl;
+    const nD = p.material.nd;
+    const nRed = indexAt(nD, p.material.abbe, LAM.C), nBlue = indexAt(nD, p.material.abbe, LAM.F);
+    const L = VERTEX + CRE;
+    const nasal = p.side === 'R' ? -1 : 1;
+    const R = p.radiusMm;
+    const pal = p.mode === 'sv' ? null : makePal(p.mode, p.add, p.corridorMm || 14, nasal, 31 * (L + 2) / (400 + L + 2), p.reachFt || 6);
+
+    // ∫add dy and its double integral (prism, surface height) on a 0.25 mm table.
+    const T0 = -60, TS = 0.25, TN = 481, prismT = new Float64Array(TN), sagT = new Float64Array(TN);
+    if (pal) {
+      const z = Math.round(-T0 / TS);
+      let I = 0, H = 0;
+      for (let i = z + 1; i < TN; i++) { I += pal.along(T0 + i * TS) * TS; H += I * TS; prismT[i] = I; sagT[i] = H; }
+      I = 0; H = 0;
+      for (let i = z - 1; i >= 0; i--) { I -= pal.along(T0 + i * TS) * TS; H -= I * TS; prismT[i] = I; sagT[i] = H; }
+    }
+    const table = (t, y) => { const f = Math.min(TN - 1.001, Math.max(0, (y - T0) / TS)), i = f | 0, w = f - i; return t[i] * (1 - w) + t[i + 1] * w; };
+    const wedge = pal ? (2 / 3) * p.add / 100 / (nD - 1) : 0;
+
+    const sect = (surf, phi) => {
+      const c2 = Math.cos(phi - axisRad) ** 2, a = surf.axis, b = surf.perp;
+      return S.make(a.c * c2 + b.c * (1 - c2), a.a4 * c2 + b.a4 * (1 - c2), a.a6 * c2 + b.a6 * (1 - c2));
+    };
+    function thickness(x, y, surf) {
+      const r = Math.hypot(x, y), phi = Math.atan2(y, x);
+      let t = surf.ct + S.sag(sect(surf, phi), r) - S.sag(surf.front, r);
+      if (pal) { t -= table(sagT, y) / (1000 * (nD - 1)); t += wedge * y; }
+      return t;
+    }
+    const rim = []; for (let i = 0; i < 48; i++) { const a = i / 48 * 2 * Math.PI; rim.push([R * Math.cos(a), R * Math.sin(a)]); }
+
+    function optimize(c1, ct, power, front) {
+      const angles = [10, 20, 30, 38].map(a => a * DEG), wts = [1, 1, 1, 0.6];
+      const merit = (u4, u6) => {
+        const asp = S.make(0, u4 * 1e-7, u6 * 1e-11);
+        const fr = front ? S.make(c1, asp.a4, asp.a6) : S.make(c1);
+        const bc = backCurvatureFor(power, fr, ct, nD);
+        const bk = front ? S.make(bc) : S.make(bc, asp.a4, asp.a6);
+        let sum = 0;
+        angles.forEach((th, i) => {
+          const r = trace(fr, bk, bk, ct, nD, L, th, true);
+          if (!r) sum += 50; else sum += wts[i] * ((r.ft - power) ** 2 + (r.fs - power) ** 2);
+        });
+        return sum;
+      };
+      const line = (f, start) => {
+        let best = start, bv = f(start);
+        for (let i = -60; i <= 60; i++) { const u = start + 2 * i, v = f(u); if (v < bv) { bv = v; best = u; } }
+        let lo = best - 2, hi = best + 2; const g = (Math.sqrt(5) - 1) / 2;
+        let a = hi - g * (hi - lo), b = lo + g * (hi - lo), fa = f(a), fb = f(b);
+        for (let i = 0; i < 24; i++) {
+          if (fa < fb) { hi = b; b = a; fb = fa; a = hi - g * (hi - lo); fa = f(a); }
+          else { lo = a; a = b; fa = fb; b = lo + g * (hi - lo); fb = f(b); }
+        }
+        const r = (lo + hi) / 2; return f(r) < bv ? r : best;
+      };
+      let u4 = 0, u6 = 0;
+      for (let k = 0; k < 3; k++) { u4 = line(x => merit(x, u6), u4); u6 = line(x => merit(u4, x), u6); }
+      return { a4: u4 * 1e-7, a6: u6 * 1e-11 };
+    }
+
+    // Lens design.
+    const se = lens.m;
+    const vogel = se >= 0 ? se + 6 : se / 2 + 6;
+    const flatten = !p.aspheric ? 0 : (se >= 0 ? Math.min(4, Math.max(1.5, 1.5 + 0.4 * se)) : Math.min(3, Math.max(1, 1 + 0.2 * Math.abs(se))));
+    const base = Math.min(10.5, Math.max(0.5, vogel - flatten));
+    const c1 = base / TOOL;
+    let ct = p.material.minCenter, asp = { a4: 0, a6: 0 }, surf;
+    for (let pass = 0; pass < 3; pass++) {
+      if (pass < 2 && p.aspheric) asp = optimize(c1, ct, se, true);
+      for (let k = 0; k < 4; k++) {
+        const front = S.make(c1, asp.a4, asp.a6);
+        surf = { front, ct, axis: S.make(backCurvatureFor(pAxis, front, ct, nD)), perp: S.make(backCurvatureFor(pAcross, front, ct, nD)) };
+        const thinnest = Math.min(...rim.map(q => thickness(q[0], q[1], surf)));
+        ct = Math.max(p.material.minCenter, ct + (p.material.minEdge - thinnest));
+      }
+    }
+    const front = S.make(c1, asp.a4, asp.a6);
+    surf = { front, ct, axis: S.make(backCurvatureFor(pAxis, front, ct, nD)), perp: S.make(backCurvatureFor(pAcross, front, ct, nD)) };
+
+    function point(x, y, chromatic) {
+      const r = Math.hypot(x, y), phi = r < 1e-9 ? 0 : Math.atan2(y, x);
+      const bk = sect(surf, phi), pp = sect(surf, phi + Math.PI / 2);
+      const theta = Math.atan2(r, L - S.sag(bk, r));
+      const ray = trace(surf.front, bk, pp, surf.ct, nD, L, theta, true);
+      if (!ray) return null;
+      let err = pv.meridians(ray.ft - pv.at(lens, phi), phi, ray.fs - pv.at(lens, phi + Math.PI / 2));
+      let meanAdd = 0, addCyl = 0, prismY = 0;
+      if (pal) {
+        const a = pal.at(x, y);
+        err = pv.add(err, { m: a.meanAdd, j0: a.j0, j45: a.j45 });
+        meanAdd = a.meanAdd; addCyl = a.cyl; prismY = -table(prismT, y) / 1000;
+      }
+      const skew = -(r / 1000) * (-lens.j0 * Math.sin(2 * phi) + lens.j45 * Math.cos(2 * phi));
+      const dir = (th, k) => {
+        let dx = Math.sin(th) * Math.cos(phi) - skew * k * Math.sin(phi);
+        let dy = Math.sin(th) * Math.sin(phi) + skew * k * Math.cos(phi) + prismY * k;
+        let dz = Math.cos(th); const l = Math.hypot(dx, dy, dz);
+        return [Math.atan2(dx / l, dz / l) / DEG, Math.asin(Math.max(-1, Math.min(1, dy / l))) / DEG];
+      };
+      const out = { err, meanAdd, addCyl, theta: theta / DEG, obj: dir(ray.thObj, 1) };
+      if (chromatic) {
+        const rr = trace(surf.front, bk, pp, surf.ct, nRed, L, theta, false);
+        const bb = trace(surf.front, bk, pp, surf.ct, nBlue, L, theta, false);
+        if (rr && bb) {
+          const red = dir(rr.thObj, (nRed - 1) / (nD - 1)), blue = dir(bb.thObj, (nBlue - 1) / (nD - 1));
+          out.fringeArcmin = Math.hypot(red[0] - blue[0], red[1] - blue[1]) * 60;
+        }
+      }
+      return out;
+    }
+
+    return {
+      lens, pAxis, pAcross, nD, pal, surf, base, radius: R, nasal,
+      thickness: (x, y) => thickness(x, y, surf),
+      edge: () => { const t = rim.map(q => thickness(q[0], q[1], surf)); return { max: Math.max(...t), min: Math.min(...t) }; },
+      point,
+    };
+  }
+
+  // ---- vision
+  const PUPIL = 4.5;
+  const dof = (pupil) => 0.8 / pupil;
+  function logMar(blur, pupil = PUPIL) { return Math.log10(1 + 0.62 * pupil * Math.max(0, blur - dof(pupil) * 0.6)); }
+  /** Blur when looking at whatever distance this point is made for (lens makers' map convention). */
+  function bestFocusBlur(err, accommodation) {
+    const defocus = err.m >= 0 ? 0 : Math.max(0, -err.m - accommodation);
+    return Math.hypot(defocus, pv.j(err));
+  }
+  function snellen(lm) {
+    const d = 20 * Math.pow(10, lm), lines = [20, 25, 30, 40, 50, 60, 70, 80, 100, 125, 150, 200, 300, 400];
+    return d > 600 ? '20/800+' : '20/' + lines.reduce((a, b) => Math.abs(b - d) < Math.abs(a - d) ? b : a);
+  }
+  /** Distance (m) a corridor point with this much add is sharp out to / in to, for a presbyope. */
+  function focusRange(meanAdd, accommodation = 0, pupil = PUPIL) {
+    const tol = dof(pupil), farV = meanAdd - tol, nearV = meanAdd + accommodation + tol;
+    return { far: farV <= 0.02 ? Infinity : 1 / farV, near: 1 / Math.max(nearV, 0.02) };
+  }
+
+  return { build, logMar, bestFocusBlur, snellen, focusRange, pv, PUPIL, DEG };
+})();
+</script>
 <script>
 // =========================
 // SETUP
@@ -477,13 +768,15 @@ const controlsHeader = document.querySelector('.controls-header');
 let dpr = 1, basePxPerMmPhysical = 4, calibrationScale = 1.0;
 let currentLensMode = 'sv';
 let rafPending = null;
+let lastParams = null;
 
 const MATERIALS = {
-  "1.50": { name: "CR-39 (1.50)",     n: 1.50, centerThickness: 1.9, minEdge: 2.0, factor: 0.8 },
-  "1.59": { name: "Polycarb (1.59)",  n: 1.59, centerThickness: 1.6, minEdge: 1.5, factor: 1.2 },
-  "1.60": { name: "Hi-Index (1.60)",  n: 1.60, centerThickness: 1.1, minEdge: 1.5, factor: 1.8 },
-  "1.67": { name: "Hi-Index (1.67)",  n: 1.67, centerThickness: 1.1, minEdge: 1.5, factor: 2.5 },
-  "1.74": { name: "Hi-Index (1.74)",  n: 1.74, centerThickness: 1.1, minEdge: 1.5, factor: 3.5 }
+  // nd = refractive index, abbe = colour dispersion, density g/cm³. Spherical design for CR-39, aspheric above.
+  "1.50": { name: "CR-39 (1.50)",     n: 1.50, nd: 1.498, abbe: 58, density: 1.32, aspheric: false, centerThickness: 1.9, minEdge: 2.0 },
+  "1.59": { name: "Polycarb (1.59)",  n: 1.59, nd: 1.586, abbe: 30, density: 1.20, aspheric: true,  centerThickness: 1.6, minEdge: 1.5 },
+  "1.60": { name: "Hi-Index (1.60)",  n: 1.60, nd: 1.597, abbe: 41, density: 1.30, aspheric: true,  centerThickness: 1.1, minEdge: 1.5 },
+  "1.67": { name: "Hi-Index (1.67)",  n: 1.67, nd: 1.665, abbe: 32, density: 1.35, aspheric: true,  centerThickness: 1.1, minEdge: 1.5 },
+  "1.74": { name: "Hi-Index (1.74)",  n: 1.74, nd: 1.740, abbe: 33, density: 1.47, aspheric: true,  centerThickness: 1.1, minEdge: 1.5 }
 };
 const MATERIAL_KEYS = Object.keys(MATERIALS);
 
@@ -496,28 +789,12 @@ const RISK_BANDS = [
     { range: [93,100], label: "Fishbowl Territory" }
 ];
 
-// Progressive: blue top zone = true infinite distance
-const PROGRESSIVE_DISTANCE_ZONES = [
-    { label: "Near (14\u201318\u2033)",          color: "#00bfff" },
-    { label: "Intermediate (19\u201336\u2033)",  color: "#39ff14" },
-    { label: "Mid-Range (3\u20138 ft)",          color: "#ffd700" },
-    { label: "Distance (8ft \u2192 \u221e)",     color: "#5599ff" }
-];
-// HD Multi: amber top zone = room distance only (~13ft max)
-const HD_MULTI_DISTANCE_ZONES = [
-    { label: "Near (14\u201318\u2033)",          color: "#00bfff" },
-    { label: "Intermediate (19\u201348\u2033)",  color: "#39ff14" },
-    { label: "Desk (4\u20136 ft)",               color: "#ffd700" },
-    { label: "Room (6\u201313ft max)",           color: "#ff9933" }
-];
-
 // =========================
 // UTILITIES
 // =========================
 function lerp(a,b,t){return a+(b-a)*t;}
 function clamp(v,mn,mx){return Math.max(mn,Math.min(mx,v));}
 function clamp01(v){return clamp(v,0,1);}
-function getAnisotropy(cyl){return Math.min(1+0.12*Math.abs(cyl),1.6);}
 function normalizeRx(sph,cyl,axis){if(cyl>0)return{sph:sph+cyl,cyl:-cyl,axis:(axis+90)%180};return{sph,cyl,axis};}
 function getBandData(score){return RISK_BANDS.find(b=>score>=b.range[0]&&score<=b.range[1])||RISK_BANDS[RISK_BANDS.length-1];}
 
@@ -542,72 +819,110 @@ function setupCanvas(){
 }
 
 // =========================
-// MATH ENGINES
+// PHYSICS GLUE
+// Everything below comes from LensPhysics: thickness, comfort zone, risk and the heat map.
 // =========================
-function calculateThicknesses(p){
-    const D_mm=p.decentration;
-    const maxMP=Math.abs(p.sph)>Math.abs(p.sph+p.cyl)?p.sph:(p.sph+p.cyl);
-    const rf=2000*(p.material.n-1);
-    const sag=(D_mm*D_mm*Math.abs(maxMP))/rf;
-    let cT,eT;
-    if(maxMP>0){eT=p.material.minEdge;cT=eT+sag;}else{cT=p.material.centerThickness;eT=cT+sag;}
-    return{centerT:cT,edgeT:eT};
+const ACCOMMODATION = 1.0;   // dioptres of focusing the eye can still add (a typical early presbyope)
+let physCache = { key: null };
+
+function lensParams(p, overrides) {
+    const mat = (overrides && overrides.material) || p.material;
+    return {
+        sph: p.sph, cyl: p.cyl, axis: p.axis, add: p.add || 2, mode: p.mode, side: p.side,
+        material: { nd: mat.nd, abbe: mat.abbe, density: mat.density, minCenter: mat.centerThickness, minEdge: mat.minEdge },
+        aspheric: mat.aspheric, radiusMm: (overrides && overrides.radius) || p.decentration, corridorMm: 14, reachFt: 6,
+    };
 }
 
-function calculateRisk(p){
-    const SE=p.sph+p.cyl/2,absSE=Math.abs(SE),absCyl=Math.abs(p.cyl);
-    const decOver=Math.max(0,p.decentration-24);
-    const seN=1-Math.exp(-absSE/8.0),cylN=1-Math.exp(-absCyl/3.0);
-    const decN=1-Math.exp(-decOver/14.0),plusN=clamp01(SE/9);
-    let progN=0;
-    if(p.mode==='progressive')progN=1;
-    else if(p.mode==='hd-multi')progN=0.35;
-    const idxMit=clamp01((p.material.n-1.50)/0.24);
-    const c1=seN*decN,c2=cylN*decN,c3=seN*cylN*0.7;
-    let base=(0.44*seN)+(0.20*cylN)+(0.20*decN)+(0.10*plusN)+(0.15*progN);
-    let inter=(0.22*c1)+(0.12*c2)+(0.10*c3);
-    const matBen=idxMit*0.15*(seN+0.5);
-    let s01=clamp01(base+inter-matBen);
-    const rs=Math.round(100*Math.pow(s01,1.05));
-    const mp=1-Math.abs((rs/100)-0.5)*2;
-    const conf=Math.round(100*clamp(0.92-0.18*mp-0.10*decN,0.2,0.95));
-    const dr=[];
-    if(absSE>5)dr.push("High SE Rx");
-    if(absCyl>2.5)dr.push("Significant CYL");
-    if(p.decentration>36)dr.push("Significant Decentration");
-    if(p.mode==='progressive')dr.push("Progressive Overlay");
-    if(p.mode==='hd-multi')dr.push("HD Multi-Func (wider corridor)");
-    if(idxMit>0.4)dr.push("Index Mitigation Active");
-    return{riskScore:rs,confidence:conf,drivers:dr};
+function getPhysics(p) {
+    const key = JSON.stringify(lensParams(p));
+    if (physCache.key === key) return physCache;
+    const model = LensPhysics.build(lensParams(p));
+    physCache = { key, model, analysis: analyze(model, p), grid: null };
+    return physCache;
 }
 
-function calculateBestCase(p){
-    const n=normalizeRx(p.sph,p.cyl,p.axis);
-    const SE=p.sph+p.cyl/2,absSE=Math.abs(SE);
-    const tMat=(absSE>4.5||p.decentration>38)?MATERIALS["1.74"]:MATERIALS["1.60"];
-    const tDec=31;
-    const bP={...n,decentration:tDec,material:tMat,mode:p.mode};
-    const br=calculateRisk(bP).riskScore;
-    const ab=clamp01(absSE/10)*0.08;
-    const bs=Math.round(br*(1-ab));
-    return{score:bs,band:getBandData(bs).label,mat:tMat.name,dec:tDec};
+function lmAt(model, x, y) {
+    const q = model.point(x, y, false);
+    return q ? LensPhysics.logMar(LensPhysics.bestFocusBlur(q.err, ACCOMMODATION)) : null;
 }
 
-function calculateSVMetrics(p){
-    const bP=Math.abs(p.sph),tP=Math.abs(p.sph+p.cyl),dR=p.material.factor;
-    const mc=48;
-    const cds=Math.max(10,mc-Math.pow(bP,1.15)*(4.5/dR));
-    const cdt=Math.max(10,mc-Math.pow(tP,1.15)*(4.5/dR));
-    const{centerT,edgeT}=calculateThicknesses(p);
-    const risk=calculateRisk(p);
-    return{cds,cdt,dS:risk.riskScore,edgeT,centerT,warp:-p.sph*0.015*(1+(2.0/dR)),twist:-p.cyl*0.08*(1+(2.0/dR))};
+function corridorWidth(model) {
+    const pal = model.pal; if (!pal) return null;
+    const y = (pal.startY + pal.endY) / 2, cx = pal.umbilic(y);
+    const ok = x => { const q = model.point(x, y); return q && 2 * LensPhysics.pv.j(q.err) < 0.5; };
+    let l = 0, r = 0;
+    while (l < 30 && ok(cx - l - 0.1)) l += 0.1;
+    while (r < 30 && ok(cx + r + 0.1)) r += 0.1;
+    return l + r;
+}
+
+function analyze(model, p) {
+    const R = model.radius;
+    // Comfort zone: how far out from the optical centre it stays 20/40 or better, averaged over 16 directions.
+    let radii = 0;
+    for (let k = 0; k < 16; k++) {
+        const a = k / 16 * 2 * Math.PI; let r = 0;
+        while (r < R) { const lm = lmAt(model, (r + 0.5) * Math.cos(a), (r + 0.5) * Math.sin(a)); if (lm === null || lm > 0.30) break; r += 0.5; }
+        radii += r;
+    }
+    let good = 0, total = 0;
+    for (let y = -R; y <= R; y += 2) for (let x = -R; x <= R; x += 2) {
+        if (x * x + y * y > R * R) continue; total++;
+        const lm = lmAt(model, x, y); if (lm !== null && lm <= 0.30) good++;
+    }
+    const usable = total ? good / total : 0;
+    const edge = model.edge();
+    const n = model.nD, ct = model.surf.ct, f1 = (n - 1) * model.surf.front.c * 1000;
+    const shape = 1 / (1 - (ct / 1000 / n) * f1), sm = P => shape / (1 - 0.015 * P);
+    const mag = (sm(model.lens.m) - 1) * 100, stretch = (sm(model.pAxis) / sm(model.pAcross) - 1) * 100;
+    const fringe = Math.max(Math.abs(model.pAxis), Math.abs(model.pAcross)) / p.material.abbe;
+    const corridor = corridorWidth(model);
+    let s = (1 - usable) * 0.75 + Math.min(1, Math.abs(mag) / 15) * 0.10 + Math.min(1, Math.abs(stretch) / 5) * 0.10 + Math.min(1, fringe / 0.5) * 0.05;
+    if (corridor !== null) s += Math.max(0, (6 - corridor) / 6) * 0.15;
+    const score = Math.round(100 * clamp01(s));
+    const drivers = [];
+    if (usable < 0.7) drivers.push(Math.round(usable * 100) + "% of the lens is 20/40 or better");
+    if (Math.abs(mag) > 4) drivers.push("Image size " + mag.toFixed(1) + "%");
+    if (Math.abs(stretch) > 1) drivers.push("Cylinder stretches shapes " + Math.abs(stretch).toFixed(1) + "%");
+    if (fringe > 0.2) drivers.push("Colour fringe " + fringe.toFixed(2) + "Δ at 1 cm (Abbe " + p.material.abbe + ")");
+    if (corridor !== null) drivers.push("Corridor " + corridor.toFixed(1) + " mm (< 0.5 D cyl)");
+    if (p.material.aspheric) drivers.push("Aspheric design (ray-optimised)");
+    return { centerT: ct, edgeT: edge.max, comfort: 2 * radii / 16, usable, mag, stretch, fringe, corridor, score,
+             confidence: p.mode === 'sv' ? 90 : 75, drivers, base: model.base };
+}
+
+function calculateBestCase(p) {
+    const SE = Math.abs(p.sph + p.cyl / 2);
+    const tMat = (SE > 4.5 || p.decentration > 38) ? MATERIALS["1.74"] : MATERIALS["1.60"];
+    const model = LensPhysics.build(lensParams(p, { material: tMat, radius: 31 }));
+    const a = analyze(model, { ...p, material: tMat, decentration: 31 });
+    return { score: a.score, band: getBandData(a.score).label, mat: tMat.name, dec: 31 };
+}
+
+/** Distance zones read off the real add along the corridor (for a presbyope). */
+function physZones(model) {
+    const pal = model.pal; if (!pal) return [];
+    const fmt = m => !isFinite(m) || m > 30 ? "∞" : m >= 1 ? Math.round(m * 3.281) + " ft" : Math.round(m * 39.37) + "″";
+    const yFor = v => { let lo = pal.startY - 20, hi = pal.endY + 20; for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; if (pal.along(m) < v) lo = m; else hi = m; } return (lo + hi) / 2; };
+    const add = pal.along(pal.endY + 5), top = pal.topAdd;
+    const cuts = pal.topAdd > 0 ? [top + 0.12, top + (add - top) * 0.5, top + (add - top) * 0.85] : [0.30, add * 0.5, add * 0.85];
+    const names = pal.topAdd > 0 ? ["Room", "Desk", "Intermediate", "Near"] : ["Distance", "Mid-Range", "Intermediate", "Near"];
+    const colors = pal.topAdd > 0 ? ["#ff9933", "#ffd700", "#39ff14", "#00bfff"] : ["#5599ff", "#ffd700", "#39ff14", "#00bfff"];
+    const bounds = [-Infinity, yFor(cuts[0]), yFor(cuts[1]), yFor(cuts[2]), Infinity];
+    const levels = [top, cuts[0], cuts[1], cuts[2], add];
+    return names.map((name, i) => {
+        const far = LensPhysics.focusRange(levels[i]).far, near = LensPhysics.focusRange(levels[i + 1]).near;
+        const range = i === 0 && top === 0 ? fmt(near) + " → ∞" : i === 0 ? "up to " + fmt(far) : fmt(near) + "–" + fmt(far);
+        return { name, range, color: colors[i], y0: bounds[i], y1: bounds[i + 1], label: name + " (" + range + ")" };
+    });
 }
 
 // =========================
 // UI UPDATES
 // =========================
 function updateRiskUI(p){
-    const cur=calculateRisk(p);const band=getBandData(cur.riskScore);
+    const a=getPhysics(p).analysis;const cur={riskScore:a.score,confidence:a.confidence,drivers:a.drivers};const band=getBandData(cur.riskScore);
     ui.riskValue.textContent=band.label+" ("+cur.riskScore+")";
     ui.riskConfidence.textContent="Confidence: "+cur.confidence+"%";
     let sh="",bc=null;
@@ -632,7 +947,7 @@ function updateDistanceUI(p){
     ui.distanceLegend.classList.toggle('visible',show);
     ui.distanceInfoBar.classList.toggle('visible',show);
     if(!show)return;
-    const zones=p.mode==='hd-multi'?HD_MULTI_DISTANCE_ZONES:PROGRESSIVE_DISTANCE_ZONES;
+    const zones=physZones(getPhysics(p).model);
     let lh='',ch='';
     zones.forEach(z=>{
         lh+='<div class="legend-row"><div class="legend-swatch" style="background:'+z.color+'"></div><div class="legend-label">'+z.label+'</div></div>';
@@ -647,7 +962,7 @@ function drawVisualization(){
     const mk=MATERIAL_KEYS[parseInt(ui.materialSlider.value)];
     const rs=parseFloat(ui.sphere.value)||0,rc=parseFloat(ui.cylinder.value)||0,ra=parseInt(ui.axis.value)||0;
     const n=normalizeRx(rs,rc,ra);
-    const p={
+    const p=lastParams={
         sph:n.sph,cyl:n.cyl,axis:n.axis,
         decentration:parseFloat(ui.decentration.value)||0,
         material:MATERIALS[mk],mode:currentLensMode,
@@ -655,11 +970,11 @@ function drawVisualization(){
         side:document.querySelector('input[name="lensSide"]:checked').value,
         add:(currentLensMode!=='sv'&&ui.addPower)?parseFloat(ui.addPower.value):0
     };
-    const m=calculateSVMetrics(p);
-    ui.clarityDiameterValue.textContent=Math.min(m.cds,m.cdt).toFixed(1)+" mm";
+    const phys=getPhysics(p),m=phys.analysis;
+    ui.clarityDiameterValue.textContent=m.corridor!==null?m.corridor.toFixed(1)+" mm corridor":Math.round(m.comfort)+" mm";
     ui.centerThicknessValue.textContent=m.centerT.toFixed(1)+" mm";
     ui.edgeThicknessValue.textContent=m.edgeT.toFixed(1)+" mm";
-    const ml={sv:"Single Vision",progressive:"Progressive","hd-multi":"HD Multi-Functional"};
+    const ml={sv:"Single Vision",progressive:"HD Progressive","hd-multi":"Multi-Functional 2.1"};
     ui.modeBadge.textContent=ml[currentLensMode];
     ui.modeBadge.classList.toggle('hd', currentLensMode==='hd-multi');
     updateRiskUI(p);
@@ -674,218 +989,91 @@ function drawVisualization(){
 // =========================
 function createWarpBackground(oCtx,w,h,p,m){
     oCtx.clearRect(0,0,w,h);
-    if(p.mode==='progressive')drawProgressiveHeatMap(oCtx,w,h,p,m);
-    else if(p.mode==='hd-multi')drawHDMultiFuncHeatMap(oCtx,w,h,p,m);
-    else drawAdvancedSVHeatmap(oCtx,w,h,p,m);
+    drawPhysicsHeatMap(oCtx,w,h,p);
+    if(p.mode!=='sv'&&p.showDistOverlay)drawDistanceRangeOverlay(oCtx,w,h,p,p.mode);
 }
 
-function drawAdvancedSVHeatmap(c2,w,h,p,met){
-    const cx=w/2,cy=h/2,pm=getPxPerMm();
-    const mr=Math.sqrt(w*w+h*h)/2;
-    const cr=Math.min(met.cds,met.cdt)/2*pm;
-    const ip=(p.sph+p.cyl/2)>0;
-    c2.save();c2.translate(cx,cy);c2.rotate(p.axis*Math.PI/180);
-    c2.scale(getAnisotropy(p.cyl),1/getAnisotropy(p.cyl));
-    const g=c2.createRadialGradient(0,0,cr*(ip?0.45:0.25),0,0,mr);
-    if(ip){g.addColorStop(0,'rgba(255,100,0,1)');g.addColorStop(0.3,'rgba(0,191,255,1)');g.addColorStop(cr/mr,'rgba(57,255,20,1)');g.addColorStop(1,'rgba(255,0,0,1)');}
-    else{g.addColorStop(0,'rgba(0,191,255,1)');g.addColorStop(cr/mr,'rgba(57,255,20,1)');g.addColorStop((cr*1.4)/mr,'rgba(255,255,0,1)');g.addColorStop(1,'rgba(255,0,0,1)');}
-    c2.fillStyle=g;c2.fillRect(-mr*2,-mr*2,mr*4,mr*4);
-    c2.restore();
+/**
+ * Ray-traced heat map. Each node is a real chief ray through the designed lens; the colour is
+ * the predicted acuity there (blue ≈ 20/20 … red ≈ 20/200+), the dark lines are a square world
+ * grid as it appears through the lens, and the white line is the 20/40 boundary.
+ */
+function physicsGrid(phys,w,h,pm){
+    const key=w+'x'+h+'@'+pm.toFixed(3);
+    if(phys.grid&&phys.grid.key===key)return phys.grid;
+    const halfW=w/2/pm,halfH=h/2/pm;
+    const step=Math.max(0.75,Math.max(halfW,halfH)*2/140);
+    const cols=Math.ceil(2*halfW/step)+2,rows=Math.ceil(2*halfH/step)+2;
+    const lm=new Float32Array(cols*rows),lon=new Float32Array(cols*rows),lat=new Float32Array(cols*rows);
+    for(let r=0;r<rows;r++){const y=-halfH+r*step;for(let c=0;c<cols;c++){
+        const x=-halfW+c*step,i=r*cols+c,q=phys.model.point(x,y,false);
+        if(!q){lm[i]=NaN;continue;}
+        lm[i]=LensPhysics.logMar(LensPhysics.bestFocusBlur(q.err,ACCOMMODATION));lon[i]=q.obj[0];lat[i]=q.obj[1];
+    }}
+    phys.grid={key,halfW,halfH,step,cols,rows,lm,lon,lat};
+    return phys.grid;
 }
 
-// ── Progressive: NARROW corridor, blue top = true far distance (infinity capable) ──
-function drawProgressiveHeatMap(c2,w,h,p,met){
-    const pm=getPxPerMm(),cx=w/2,cy=h/2;
-    const dMm=11,iMm=3,ns=(p.side==='R'?-1:1);
-    const dPx=dMm*pm,iPx=iMm*pm;
-    const rs=clamp(met.dS/100,0,1);
-    const bwt=lerp(12,5,rs),bwb=lerp(7,4,rs);
-    function cX(y){const t=clamp((y-cy)/dPx,0,1);return cx+ns*iPx*(t*(1-0.3*t)-0.15*Math.pow(t,3));}
-    function hW(y){const t=clamp((y-cy)/dPx,0,1);return(lerp(bwt,bwb,t)*(1-0.6*Math.sin(Math.PI*t)))*pm;}
-
-    c2.fillStyle='rgba(255,0,0,1)';c2.fillRect(0,0,w,h);
-    const id=c2.getImageData(0,0,w,h),d=id.data;
-
-    // Pre-compute row-dependent values — avoids redundant per-pixel calls
-    const cXArr=new Float32Array(h),hWArr=new Float32Array(h),vpArr=new Float32Array(h),ytArr=new Float32Array(h);
-    for(let y=0;y<h;y++){
-        cXArr[y]=cX(y); hWArr[y]=hW(y)||1;
-        let vp=0;
-        if(y<cy-6*pm)vp=((cy-6*pm)-y)/(6*pm);
-        if(y>cy+dPx+4*pm)vp=(y-(cy+dPx+4*pm))/(6*pm);
-        vpArr[y]=vp;
-        ytArr[y]=clamp((y-cy)/dPx,0,1);
-    }
-
-    const step=2; // half-resolution — 4× speedup with minimal visible difference
+function drawPhysicsHeatMap(c2,w,h,p){
+    const pm=getPxPerMm(),cx=w/2,cy=h/2,phys=getPhysics(p),g=physicsGrid(phys,w,h,pm),R=phys.model.radius;
+    const id=c2.createImageData(w,h),d=id.data,step=2;
+    const sample=(arr,x,y)=>{
+        const fx=Math.min(g.cols-1.001,Math.max(0,(x+g.halfW)/g.step)),fy=Math.min(g.rows-1.001,Math.max(0,(y+g.halfH)/g.step));
+        const c0=fx|0,r0=fy|0,tx=fx-c0,ty=fy-r0,i=r0*g.cols+c0;
+        const a=arr[i],b=arr[i+1],c=arr[i+g.cols],e=arr[i+g.cols+1];
+        return (a*(1-tx)+b*tx)*(1-ty)+(c*(1-tx)+e*tx)*ty;
+    };
+    const degPerPx=step/pm*2.3;
+    const lmRow=new Float32Array(Math.ceil(w/step)+1);let prevRow=null;
     for(let y=0;y<h;y+=step){
-        const ccX=cXArr[y],hw=hWArr[y],vp=vpArr[y],yt=ytArr[y];
-        for(let x=0;x<w;x+=step){
-            const dx=x-cx,dy=y-cy;
-            const dfc=Math.abs(x-ccX)/hw;
-            const ap=clamp(distortionScoreAt(dx,dy,w,h,p,met)*3.0,0,5);
-            const isn=(x-cx)*ns>0;
-            const nb=clamp(isn?Math.abs(x-cx)/(10*pm):0,0,1.2)*yt;
-            let cs=dfc*(1.2+rs*2.0)+ap*(0.8+nb)+clamp(vp,0,2)*0.7;
-            cs*=(0.6+0.4*yt);
-
+        const ym=(y-cy)/pm,row=new Float32Array(Math.ceil(w/step)+1);
+        for(let x=0,k=0;x<w;x+=step,k++){
+            const xm=(x-cx)/pm,v=sample(g.lm,xm,ym);row[k]=v;
             let col;
-            // Top: blend toward blue — progressive can see to infinity (unlike HD Multi)
-            if(y < cy-3*pm){
-                const distFade=clamp((cy-3*pm-y)/(9*pm),0,1);
-                const base=heatColor(clamp(cs/3.5,0,1));
-                col=[
-                    (base[0]*(1-distFade*0.55))|0,
-                    Math.min(255,(base[1]*(1-distFade*0.15)+110*distFade))|0,
-                    Math.min(255,(base[2]*(1-distFade*0.2)+220*distFade))|0
-                ];
-            } else {
-                col=heatColor(clamp(cs/3.5,0,1));
+            if(isNaN(v)){col=((x+y)>>3)&1?[38,38,46]:[30,30,36];}
+            else{
+                col=heatColor(clamp(v/1.1,0,1));
+                // 20/40 boundary (white), from neighbours to the left and above.
+                const left=k>0?row[k-1]:v,up=prevRow?prevRow[k]:v;
+                if((v-0.30)*(left-0.30)<0||(v-0.30)*(up-0.30)<0)col=[255,255,255];
+                // Square world grid as seen through the lens (5° spacing).
+                const lo=sample(g.lon,xm,ym),la=sample(g.lat,xm,ym);
+                const dist=Math.min(Math.abs(lo/5-Math.round(lo/5)),Math.abs(la/5-Math.round(la/5)))*5/degPerPx;
+                if(dist<0.9){const f=0.38*(1-dist/0.9);col=[col[0]*(1-f),col[1]*(1-f),col[2]*(1-f)];}
+                if(xm*xm+ym*ym>R*R)col=[col[0]*0.45,col[1]*0.45,col[2]*0.45];
             }
-
-            // Write 2×2 block
-            for(let by=0;by<step&&y+by<h;by++){for(let bx=0;bx<step&&x+bx<w;bx++){
-                const idx=((y+by)*w+(x+bx))*4;
-                d[idx]=col[0];d[idx+1]=col[1];d[idx+2]=col[2];d[idx+3]=255;
-            }}
+            for(let by=0;by<step&&y+by<h;by++)for(let bx=0;bx<step&&x+bx<w;bx++){
+                const idx=((y+by)*w+(x+bx))*4;d[idx]=col[0];d[idx+1]=col[1];d[idx+2]=col[2];d[idx+3]=255;
+            }
         }
+        prevRow=row;
     }
     c2.putImageData(id,0,0);
-    if(p.showDistOverlay)drawDistanceRangeOverlay(c2,w,h,p,'progressive');
-}
-
-// ── HD Multi-Func: WIDE corridor, amber top = room distance only (~13ft) ──
-function drawHDMultiFuncHeatMap(c2,w,h,p,met){
-    const pm=getPxPerMm(),cx=w/2,cy=h/2;
-    const dMm=15,iMm=1.8,ns=(p.side==='R'?-1:1);
-    const dPx=dMm*pm,iPx=iMm*pm;
-    const rs=clamp(met.dS/100,0,1);
-    const bwt=lerp(24,16,rs),bwm=lerp(20,12,rs),bwb=lerp(18,10,rs);
-    function cX(y){const t=clamp((y-cy)/dPx,0,1);return cx+ns*iPx*(t*(1-0.4*t));}
-    function hW(y){
-        const t=clamp((y-cy)/dPx,0,1);
-        const t2m=lerp(bwt,bwm,Math.min(t*2,1));
-        const m2b=lerp(bwm,bwb,Math.max((t-0.5)*2,0));
-        const ww=t<0.5?t2m:m2b;
-        return ww*(1-0.12*Math.sin(Math.PI*t))*pm;
-    }
-
-    c2.fillStyle='rgba(255,0,0,1)';c2.fillRect(0,0,w,h);
-    const id=c2.getImageData(0,0,w,h),d=id.data;
-
-    const cXArr=new Float32Array(h),hWArr=new Float32Array(h),vpArr=new Float32Array(h),ytArr=new Float32Array(h);
-    for(let y=0;y<h;y++){
-        cXArr[y]=cX(y); hWArr[y]=hW(y)||1;
-        let vp=0;
-        if(y<cy-8*pm){vp=((cy-8*pm)-y)/(14*pm);vp*=0.45;}
-        if(y>cy+dPx+6*pm)vp=(y-(cy+dPx+6*pm))/(10*pm);
-        vpArr[y]=vp;
-        ytArr[y]=clamp((y-cy)/dPx,0,1);
-    }
-
-    const step=2;
-    for(let y=0;y<h;y+=step){
-        const ccX=cXArr[y],hw=hWArr[y],vp=vpArr[y],yt=ytArr[y];
-        for(let x=0;x<w;x+=step){
-            const dx=x-cx,dy=y-cy;
-            const dfc=Math.abs(x-ccX)/hw;
-            const ap=clamp(distortionScoreAt(dx,dy,w,h,p,met)*1.2,0,2.5);
-            const isn=(x-cx)*ns>0;
-            const nb=clamp(isn?Math.abs(x-cx)/(18*pm):0,0,0.5)*yt;
-            let cs=dfc*(0.5+rs*0.9)+ap*(0.35+nb*0.4)+clamp(vp,0,1.2)*0.4;
-            cs*=(0.35+0.25*yt);
-
-            let col;
-            // Top: amber/orange tint — HD Multi CANNOT see to infinity; caps at ~13ft room distance
-            if(y < cy-4*pm){
-                const roomFade=clamp((cy-4*pm-y)/(11*pm),0,1);
-                const base=heatColor(clamp(cs/3.5,0,1));
-                col=[
-                    Math.min(255,(base[0]+90*roomFade*(1-rs*0.3)))|0,
-                    Math.min(255,(base[1]*(1-roomFade*0.5)+100*roomFade*(1-rs*0.4)))|0,
-                    (base[2]*(1-roomFade))|0
-                ];
-            } else {
-                col=heatColor(clamp(cs/3.5,0,1));
-            }
-
-            for(let by=0;by<step&&y+by<h;by++){for(let bx=0;bx<step&&x+bx<w;bx++){
-                const idx=((y+by)*w+(x+bx))*4;
-                d[idx]=col[0];d[idx+1]=col[1];d[idx+2]=col[2];d[idx+3]=255;
-            }}
-        }
-    }
-    c2.putImageData(id,0,0);
-    if(p.showDistOverlay)drawDistanceRangeOverlay(c2,w,h,p,'hd-multi');
+    // Lens edge at the D_mm radius.
+    c2.save();c2.strokeStyle='rgba(255,255,255,0.7)';c2.lineWidth=1.5*dpr;c2.setLineDash([7*dpr,5*dpr]);
+    c2.beginPath();c2.arc(cx,cy,R*pm,0,2*Math.PI);c2.stroke();c2.restore();
 }
 
 function drawDistanceRangeOverlay(c2,w,h,p,type){
-    const pm=getPxPerMm(),cx=w/2,cy=h/2;
-    c2.save();c2.globalCompositeOperation='source-over';
-    let zones;
-    if(type==='progressive'){
-        zones=[
-            {yS:0,yE:cy-6*pm,col:"rgba(85,153,255,0.14)",bdr:"#5599ff",lbl:"DISTANCE  8ft \u2192 \u221e"},
-            {yS:cy-6*pm,yE:cy+2*pm,col:"rgba(255,215,0,0.12)",bdr:"#ffd700",lbl:"MID-RANGE  3\u20138ft"},
-            {yS:cy+2*pm,yE:cy+10*pm,col:"rgba(57,255,20,0.12)",bdr:"#39ff14",lbl:"INTERMEDIATE  19\u201336\u2033"},
-            {yS:cy+10*pm,yE:h,col:"rgba(0,191,255,0.12)",bdr:"#00bfff",lbl:"NEAR  14\u201318\u2033"},
-        ];
-    }else{
-        zones=[
-            {yS:0,yE:cy-6*pm,col:"rgba(255,153,51,0.14)",bdr:"#ff9933",lbl:"ROOM  6\u201313ft max"},
-            {yS:cy-6*pm,yE:cy+3*pm,col:"rgba(255,215,0,0.12)",bdr:"#ffd700",lbl:"DESK  4\u20136ft"},
-            {yS:cy+3*pm,yE:cy+12*pm,col:"rgba(57,255,20,0.12)",bdr:"#39ff14",lbl:"INTERMEDIATE  19\u201348\u2033"},
-            {yS:cy+12*pm,yE:h,col:"rgba(0,191,255,0.12)",bdr:"#00bfff",lbl:"NEAR  14\u201318\u2033"},
-        ];
-    }
-    zones.forEach(z=>{
-        c2.fillStyle=z.col;c2.fillRect(0,z.yS,w,z.yE-z.yS);
-        c2.strokeStyle=z.bdr;c2.lineWidth=1.5;c2.globalAlpha=0.45;
-        c2.setLineDash([6,4]);
-        c2.beginPath();c2.moveTo(0,z.yE);c2.lineTo(w,z.yE);c2.stroke();
-        c2.setLineDash([]);c2.globalAlpha=0.6;
-        const ly=(z.yS+z.yE)/2;
-        c2.fillStyle=z.bdr;
-        c2.font='600 '+Math.round(9*dpr)+'px DM Sans,sans-serif';
-        c2.textAlign='right';
-        c2.fillText(z.lbl,w-10*dpr,ly+4*dpr);
-        c2.globalAlpha=1.0;
+    const pm=getPxPerMm(),cy=h/2;
+    c2.save();
+    physZones(getPhysics(p).model).forEach(z=>{
+        const y0=Math.max(0,cy+z.y0*pm),y1=Math.min(h,cy+z.y1*pm);
+        if(y1<=y0)return;
+        c2.globalAlpha=0.10;c2.fillStyle=z.color;c2.fillRect(0,y0,w,y1-y0);
+        c2.globalAlpha=0.45;c2.strokeStyle=z.color;c2.lineWidth=1.5;c2.setLineDash([6,4]);
+        c2.beginPath();c2.moveTo(0,y1);c2.lineTo(w,y1);c2.stroke();c2.setLineDash([]);
+        c2.globalAlpha=0.85;c2.fillStyle=z.color;
+        c2.font='600 '+Math.round(9*dpr)+'px DM Sans,sans-serif';c2.textAlign='right';
+        c2.fillText((z.name+'  '+z.range).toUpperCase(),w-10*dpr,(y0+y1)/2+4*dpr);
     });
     c2.restore();
-}
-
-function distortionScoreAt(dx,dy,w,h,p,met){
-    const r=Math.sqrt(dx*dx+dy*dy),mr=Math.sqrt(w*w+h*h)/2,rn=r/mr;
-    const th=Math.atan2(dy,dx),ar=(p.axis*Math.PI)/180;
-    const rad=Math.abs(met.warp)*Math.pow(rn,1.6);
-    const nb=(p.side==='R'&&dx>0)||(p.side==='L'&&dx<0)?1.15:0.95;
-    const tw=Math.abs(met.twist)*nb*Math.pow(rn,2.1)*Math.abs(Math.sin(2*(th-ar)));
-    return rad+tw;
 }
 
 function drawRayMappedView(p,met){
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.drawImage(offscreenCanvas,0,0);
-    drawDistortedGrid(ctx,canvas.width,canvas.height,p,met);
-}
-
-function drawDistortedGrid(c2,w,h,p,met){
-    const pm=getPxPerMm(),step=4.0*pm,cx=w/2,cy=h/2;
-    c2.strokeStyle='rgba(0,0,0,0.22)';c2.lineWidth=1.0*dpr;c2.beginPath();
-    const gP=(ox,oy)=>{
-        let dx=ox-cx,dy=oy-cy;
-        const r=Math.sqrt(dx*dx+dy*dy),rn=r/(w/2),th=Math.atan2(dy,dx);
-        let pw=p.sph;
-        if(p.mode!=='sv'&&dy>0)pw+=p.add*clamp(dy/(12*pm),0,1);
-        const mg=1/(1-(pw*0.045*(1.55/p.material.n)));
-        const fr=r*mg*(1+met.warp*2.8*0.18*rn**2);
-        const ta=met.twist*2.8*0.18*rn**2.2*Math.sin(2*(th-p.axis*Math.PI/180));
-        return{x:cx+fr*Math.cos(th-ta),y:cy+fr*Math.sin(th-ta)};
-    };
-    const buf=w*0.6;
-    for(let x=-buf;x<=w+buf;x+=step){for(let y=-buf;y<=h+buf;y+=15){const pt=gP(x,y);if(y===-buf)c2.moveTo(pt.x,pt.y);else c2.lineTo(pt.x,pt.y);}}
-    for(let y=-buf;y<=h+buf;y+=step){for(let x=-buf;x<=w+buf;x+=15){const pt=gP(x,y);if(x===-buf)c2.moveTo(pt.x,pt.y);else c2.lineTo(pt.x,pt.y);}}
-    c2.stroke();
+    // The see-through grid is drawn into the heat map from the traced rays.
 }
 
 function drawClinicalOverlay(p,met){
@@ -908,11 +1096,11 @@ function drawClinicalOverlay(p,met){
     }
     if(p.mode==='progressive')drawProgressiveMarkers(ctx,cx,cy,pm,p);
     else if(p.mode==='hd-multi')drawHDMultiMarkers(ctx,cx,cy,pm,p);
-    else{
-        const cr=Math.min(met.cds,met.cdt)/2*pm;
-        const ar=(p.axis*Math.PI)/180,an=getAnisotropy(p.cyl);
-        ctx.lineWidth=2.5;ctx.strokeStyle='rgba(255,255,255,0.55)';
-        ctx.beginPath();ctx.ellipse(cx,cy,cr*an,cr/an,ar,0,2*Math.PI);ctx.stroke();
+    else if(Math.abs(p.cyl)>=0.25){
+        const ar=(p.axis*Math.PI)/180,len=14*pm;
+        ctx.save();ctx.lineWidth=1.5*dpr;ctx.strokeStyle='rgba(255,255,255,0.7)';ctx.setLineDash([8*dpr,5*dpr]);
+        ctx.beginPath();ctx.moveTo(cx-Math.cos(ar)*len,cy-Math.sin(ar)*len);ctx.lineTo(cx+Math.cos(ar)*len,cy+Math.sin(ar)*len);ctx.stroke();
+        ctx.fillStyle='rgba(255,255,255,0.85)';ctx.font='600 '+9*dpr+'px DM Sans,sans-serif';ctx.fillText('AXIS '+p.axis+'\u00b0',cx+Math.cos(ar)*len+4*dpr,cy+Math.sin(ar)*len);ctx.restore();
     }
     drawLensCrossSection(pm,w,h,met.centerT,met.edgeT);
 }
@@ -937,7 +1125,7 @@ function drawHDMultiMarkers(c2,cx,cy,pm,p){
     c2.beginPath();c2.ellipse(cx,dy2,8*pm,3*pm,0,0,2*Math.PI);c2.stroke();
     c2.beginPath();c2.arc(nx,ny,6*pm,0,2*Math.PI);c2.stroke();
     c2.fillStyle='rgba(255,255,255,0.65)';c2.font='600 '+8.5*dpr+'px DM Sans,sans-serif';c2.textAlign='center';
-    c2.fillText("ROOM \u226413ft",cx,ry-4.5*pm);
+    c2.fillText("ROOM \u2264"+Math.round(LensPhysics.focusRange(getPhysics({...lastParams}).model.pal.topAdd).far*3.281)+"ft",cx,ry-4.5*pm);
     c2.fillText("DESK 4\u20136ft",cx,dy2-4*pm);
     c2.fillText("NEAR",nx,ny+7.5*pm);
 }
